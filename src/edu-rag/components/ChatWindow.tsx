@@ -37,7 +37,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     };
 
     return (
-        <div className="flex flex-col h-full card p-6 relative">
+        <div className="flex flex-col h-full card p-6 relative border border-neutral-200 dark:border-neutral-200">
 
             {/* Internal Card Header */}
             <div className="flex items-start justify-between mb-6">
@@ -59,7 +59,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             
 
             {/* Messages Area */}
-            <div className="flex-1 !bg-white/60 dark:bg-white/5 backdrop-blur-md rounded-2xl border border-sky-100 dark:border-white/5 p-4 overflow-y-auto mb-4 scrollbar-default relative shadow-sm">
+            <div className="flex-1 bg-white/60 dark:bg-white backdrop-blur-md rounded-2xl border border-sky-100 dark:border-white/20 p-4 overflow-y-auto mb-4 scrollbar-default relative shadow-sm">
                 {messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-neutral-400 dark:text-neutral-600 text-sm">
                         等待輸入...
@@ -98,17 +98,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="輸入問題..."
-                    className="flex-1 !bg-white/60 dark:bg-white/5 backdrop-blur-md border border-neutral-200 dark:border-white/5 rounded-2xl p-4 text-neutral-800 dark:text-neutral-200 resize-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20 outline-none transition-all placeholder-neutral-400 dark:placeholder-neutral-600 shadow-sm"
+                    className="flex-1 bg-white/60 dark:bg-white backdrop-blur-md border border-neutral-200 dark:border-white/20 rounded-2xl p-4 text-neutral-800 dark:text-neutral-200 resize-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20 outline-none transition-all placeholder-neutral-400 dark:placeholder-neutral-600 shadow-sm"
                 />
                 <button
                     onClick={onSend}
                     disabled={!inputText.trim() || sending}
-                    className={`w-24 rounded-2xl flex items-center justify-center font-medium transition-all ${inputText.trim() && !sending
-                        ? 'bg-sky-500 text-white hover:bg-sky-400 shadow-lg shadow-sky-500/20'
-                        : '!bg-white/70 dark:bg-white/5 text-neutral-400 dark:text-neutral-600 cursor-not-allowed border border-neutral-200 dark:border-white/5'
-                        }`}
+                    className={`w-24 rounded-2xl flex items-center justify-center font-medium transition-all ${
+                        inputText.trim() && !sending
+                            ? 'bg-sky-500 text-white hover:bg-sky-400 shadow-lg shadow-sky-500/20 dark:!bg-white dark:!text-neutral-800 dark:hover:!bg-white/90 dark:shadow-none'
+                            : 'bg-white/20 backdrop-blur-md text-neutral-400 dark:text-neutral-600 cursor-not-allowed border border-white/20 dark:border-white/20'
+                    }`}
                 >
-                    {sending ? <RotateCcw className="w-5 h-5 animate-spin" /> : '送出'}
+                    {sending ? <RotateCcw className="w-5 h-5 animate-spin " /> : '送出'}
                 </button>
             </div>
         </div>

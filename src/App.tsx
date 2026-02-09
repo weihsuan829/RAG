@@ -1,48 +1,96 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './layouts/Sidebar';
 import EduRagChatPage from './edu-rag/pages/EduRagChatPage';
 import EduRagUploadPage from './edu-rag/pages/EduRagUploadPage';
 import EduRagDocsPage from './edu-rag/pages/EduRagDocsPage';
 import EduRagDocDetailPage from './edu-rag/pages/EduRagDocDetailPage';
-import { Menu } from 'lucide-react';
+import { Menu, Moon, Sun } from 'lucide-react';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { listUploads, type UploadRecord } from './edu-rag/utils/uploadStore';
 import logoWhite from './assets/新北教育局-logo白.png';
 import logoBlack from './assets/新北教育局-logo黑.png';
 
-// 全站共用的版型殼：包含側邊欄、頂部工具列與內容區塊
 const Layout = ({ children }: { children: React.ReactNode }) => {
-  // 控制側邊欄展開/收合的狀態
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  // 取得目前主題，決定顯示哪個 logo
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const logoSrc = theme === 'dark' ? logoWhite : logoBlack;
+  const [fontSize, setFontSize] = useState(16);
+  const minFontSize = 12;
+  const maxFontSize = 22;
+  const step = 2;
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem('font-size-base');
+    const parsed = saved ? Number(saved) : NaN;
+    const initial = Number.isFinite(parsed) ? parsed : 16;
+    setFontSize(initial);
+    document.documentElement.style.setProperty('--font-size-base', `${initial}px`);
+  }, []);
+
+  const applyFontSize = (nextSize: number) => {
+    const clamped = Math.min(maxFontSize, Math.max(minFontSize, nextSize));
+    setFontSize(clamped);
+    document.documentElement.style.setProperty('--font-size-base', `${clamped}px`);
+    window.localStorage.setItem('font-size-base', String(clamped));
+  };
+
+  const increaseFontSize = () => {
+    applyFontSize(fontSize + step);
+  };
+
+  const decreaseFontSize = () => {
+    applyFontSize(fontSize - step);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg-page)] text-[var(--text-primary)] transition-colors duration-300">
-      {/* 可收合的側邊欄區塊 */}
       <div className={`flex-shrink-0 transition-all duration-300 p-4 ${sidebarOpen ? 'w-72' : 'w-0'}`}>
         <div className="h-full card overflow-hidden">
           <Sidebar />
         </div>
       </div>
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden p-4 pl-0">
-        {/* 頂部工具列：顯示標題、切換側邊欄 */}
-        <header className="h-16 flex items-center px-6 mb-4 card mx-4 mt-0 shrink-0">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 -ml-2 rounded-xl hover:bg-neutral-800 text-neutral-400 hover:text-white transition-colors"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-          <img
-            src={logoSrc}
-            alt="新北市教育局"
-            className="ml-4 h-10 w-auto object-contain"
-          />
+        <header className="h-16 flex items-center justify-between px-6 mb-4 card mx-4 mt-0 shrink-0">
+          <div className="flex items-center">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 -ml-2 rounded-xl hover:bg-neutral-800 text-neutral-400 hover:text-white transition-colors"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
+            <img
+              src={logoSrc}
+              alt="Logo"
+              className="ml-4 h-10 w-auto object-contain"
+            />
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 text-sm text-text-secondary-light dark:text-gray-400">
+              <span>字體大小</span>
+              <button
+                onClick={increaseFontSize}
+                className="w-8 h-8 rounded border border-border-light dark:border-gray-700 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label="放大字體"
+              >
+                A+
+              </button>
+              <button
+                onClick={decreaseFontSize}
+                className="w-8 h-8 rounded border border-border-light dark:border-gray-700 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label="縮小字體"
+              >
+                A-
+              </button>
+            </div>
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-text-secondary-light dark:text-gray-400 transition-colors"
+            >
+              {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            </button>
+          </div>
         </header>
-        {/* 路由內容渲染區塊 */}
         <main className="flex-1 overflow-auto rounded-2xl mx-4 mb-0 relative">
           {children}
         </main>
@@ -51,7 +99,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// 範例頁面：保留給既有系統或未完成的頁面
 const Dashboard = () => {
   const [docs, setDocs] = useState<UploadRecord[]>([]);
 
@@ -115,28 +162,17 @@ const Dashboard = () => {
   );
 };
 
-// App 為此專案的主要進入點：組合主題、路由與整體版型
 const App = () => {
   return (
-    // ThemeProvider 控制全站 light/dark 主題
     <ThemeProvider>
-      {/* Router 負責前端路由切換 */}
       <Router>
-        {/* Layout 是所有頁面共用的外框 */}
         <Layout>
           <Routes>
-            {/* 入口路由：導向教育局 RAG 聊天首頁 */}
             <Route path="/" element={<Navigate to="/app/edu-rag/chat" replace />} />
-            {/* 範例/既有頁面入口 */}
             <Route path="/app/dashboard" element={<Dashboard />} />
-
-            {/* 教育局 RAG 功能路由 */}
             <Route path="/app/edu-rag/chat" element={<EduRagChatPage />} />
-            {/* 後台：上傳資料 */}
             <Route path="/app/edu-rag/admin/upload" element={<EduRagUploadPage />} />
-            {/* 後台：文件清單 */}
             <Route path="/app/edu-rag/admin/docs" element={<EduRagDocsPage />} />
-            {/* 後台：單一文件詳情 */}
             <Route path="/app/edu-rag/admin/docs/:id" element={<EduRagDocDetailPage />} />
           </Routes>
         </Layout>

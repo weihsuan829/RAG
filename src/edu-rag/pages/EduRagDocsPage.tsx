@@ -119,7 +119,7 @@ const EduRagDocsPage = () => {
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-semibold text-slate-800">文件管理</h1>
+                <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-800">文件管理</h1>
                 <Link to="/app/edu-rag/admin/upload" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
                     前往上傳
                 </Link>
