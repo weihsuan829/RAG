@@ -1,4 +1,4 @@
-// Mock data and types for the Education RAG demo UI.
+// 教育局 RAG Demo 使用的型別與假資料（開發/展示用途）。
 export interface Thread {
     id: string;
     title: string;
@@ -11,6 +11,7 @@ export interface Message {
     role: 'user' | 'assistant';
     content: string;
     timestamp: string;
+    isThinking?: boolean;
     citations?: Citation[];
 }
 
@@ -64,6 +65,40 @@ export const MOCK_DOCS: Doc[] = [
     { id: 'd2', name: '雙語教學指引v2.docx', type: 'docx', year: '112', status: 'indexed', updatedAt: '2023-11-20', tags: ['教學', '指引'] },
     { id: 'd3', name: '特教助理員申請辦法.pdf', type: 'pdf', year: '113', status: 'processing', updatedAt: '2024-05-20', tags: ['特教', '補助'] },
     { id: 'd4', name: '校園傳染病防治手冊.pdf', type: 'pdf', year: '112', status: 'error', updatedAt: '2023-09-01', tags: ['衛教', '防疫'] },
+];
+
+/**
+ * 系統預設文件（放在 public/docs 目錄下）
+ * 這些文件是「全域」可見的，與使用者上傳的 IndexedDB 紀錄分開。
+ */
+export const SYSTEM_DOCS: Doc[] = [
+    {
+        id: 'sys-1',
+        name: '【GPT】114年教育局各科室各項績效一覽表.pdf',
+        type: 'pdf',
+        year: '114',
+        status: 'indexed',
+        updatedAt: '2025-03-01',
+        tags: ['績效', '年度資料']
+    },
+    {
+        id: 'sys-2',
+        name: '【GPT】教育局114學年度重要資料及數據.xlsx',
+        type: 'pdf', // 雖然副檔名是 xlsx，但類型在 UI 標籤中由副檔名判斷，這裡維持與其餘一致
+        year: '114',
+        status: 'indexed',
+        updatedAt: '2025-03-01',
+        tags: ['數據', '統計']
+    },
+    {
+        id: 'sys-3',
+        name: '【GPT】議會質詢模擬問答詳版說明.docx',
+        type: 'docx',
+        year: '114',
+        status: 'indexed',
+        updatedAt: '2025-03-01',
+        tags: ['質詢', '模擬問答']
+    },
 ];
 
 // Sample chunk preview list.

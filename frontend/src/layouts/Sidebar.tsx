@@ -5,24 +5,25 @@ import {
     MessageSquare,
     Upload,
     FileText,
-    Settings,
     ChevronDown,
     ChevronRight,
     BookOpen
 } from 'lucide-react';
 import clsx from 'clsx';
 
+// 側邊欄：提供系統主要導覽入口與教育局 RAG 子選單。
 const Sidebar = () => {
     const location = useLocation();
+    // 控制教育局 RAG 區塊展開/收合。
     const [eduRagOpen, setEduRagOpen] = useState(true);
 
     // Highlight links by matching a route prefix.
     const isActive = (path: string) => location.pathname.startsWith(path);
 
     return (
-        <div className="flex flex-col h-full w-full bg-transparent text-neutral-900 dark:text-neutral-300">
+        <div className="flex flex-col h-full w-full bg-transparent text-slate-900 dark:text-white">
             {/* Brand / title */}
-            <div className="h-16 flex items-center px-6 border-b border-neutral-800/50 font-bold text-sky-400 text-xl tracking-wider">
+            <div className="h-16 flex items-center px-6 border-b border-slate-200 dark:border-neutral-800 font-bold text-blue-500 dark:text-blue-400 text-xl tracking-wider uppercase">
                 目錄
             </div>
 
@@ -33,8 +34,8 @@ const Sidebar = () => {
                     className={({ isActive }) => clsx(
                         "flex items-center px-4 py-3 rounded-xl transition-all duration-200",
                         isActive
-                            ? "bg-sky-500/10 text-sky-500 dark:text-sky-300 border border-sky-500/30"
-                            : "hover:bg-neutral-500/10 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+                            ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 font-medium"
+                            : "text-slate-500 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800/50 hover:text-slate-900 dark:hover:text-white"
                     )}
                 >
                     <LayoutDashboard className="w-5 h-5 mr-3" />
@@ -47,27 +48,29 @@ const Sidebar = () => {
                     <button
                         onClick={() => setEduRagOpen(!eduRagOpen)}
                         className={clsx(
-                            "w-full flex items-center px-4 py-3 rounded-xl hover:bg-neutral-500/10 transition-all duration-200 justify-between",
-                            isActive('/app/edu-rag') ? "text-sky-500 dark:text-sky-300" : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white"
+                            "w-full flex items-center px-4 py-3 rounded-xl transition-all duration-200 justify-between",
+                            isActive('/app/edu-rag')
+                                ? "text-blue-600 dark:text-blue-400"
+                                : "text-slate-500 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800/50 hover:text-slate-900 dark:hover:text-white"
                         )}
                     >
                         <div className="flex items-center">
-                            <BookOpen className="w-5 h-5 mr-3 text-sky-500" />
+                            <BookOpen className={clsx("w-5 h-5 mr-3", isActive('/app/edu-rag') ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-neutral-500")} />
                             <span className="font-medium">教育局 RAG</span>
                         </div>
                         {eduRagOpen ? <ChevronDown className="w-4 h-4 opacity-70" /> : <ChevronRight className="w-4 h-4 opacity-70" />}
                     </button>
 
                     <div className={`overflow-hidden transition-all duration-300 ${eduRagOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-                        <div className="space-y-1 mt-1 ml-4 border-l border-neutral-200 dark:border-neutral-800 pl-2">
+                        <div className="space-y-1 mt-1 ml-4 border-l border-slate-200 dark:border-neutral-800 pl-2">
                             {/* Section links */}
                             <NavLink
                                 to="/app/edu-rag/chat"
                                 className={({ isActive }) => clsx(
                                     "flex items-center pl-3 pr-4 py-2.5 rounded-lg text-sm transition-all duration-200",
                                     isActive
-                                        ? "bg-neutral-200/50 dark:bg-neutral-800 text-sky-600 dark:text-sky-300 font-medium"
-                                        : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-500/10"
+                                        ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 font-medium"
+                                        : "text-slate-500 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800/50 hover:text-slate-900 dark:hover:text-white"
                                 )}
                             >
                                 <MessageSquare className="w-4 h-4 mr-2" />
@@ -78,8 +81,8 @@ const Sidebar = () => {
                                 className={({ isActive }) => clsx(
                                     "flex items-center pl-3 pr-4 py-2.5 rounded-lg text-sm transition-all duration-200",
                                     isActive
-                                        ? "bg-neutral-200/50 dark:bg-neutral-800 text-sky-600 dark:text-sky-300 font-medium"
-                                        : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-500/10"
+                                        ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 font-medium"
+                                        : "text-slate-500 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800/50 hover:text-slate-900 dark:hover:text-white"
                                 )}
                             >
                                 <FileText className="w-4 h-4 mr-2" />
@@ -90,8 +93,8 @@ const Sidebar = () => {
                                 className={({ isActive }) => clsx(
                                     "flex items-center pl-3 pr-4 py-2.5 rounded-lg text-sm transition-all duration-200",
                                     isActive
-                                        ? "bg-neutral-200/50 dark:bg-neutral-800 text-sky-600 dark:text-sky-300 font-medium"
-                                        : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-500/10"
+                                        ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 font-medium"
+                                        : "text-slate-500 dark:text-neutral-400 hover:bg-slate-100 dark:hover:bg-neutral-800/50 hover:text-slate-900 dark:hover:text-white"
                                 )}
                             >
                                 <Upload className="w-4 h-4 mr-2" />
@@ -99,17 +102,6 @@ const Sidebar = () => {
                             </NavLink>
                         </div>
                     </div>
-                </div>
-
-                {/* Utility actions */}
-                <div className="pt-4 mt-4 border-t border-neutral-200 dark:border-neutral-800/50 mx-2">
-                    <div className="px-4 py-2 text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider">
-                        System
-                    </div>
-                    <a href="#" className="flex items-center px-4 py-3 rounded-xl hover:bg-neutral-500/10 transition-colors opacity-50 cursor-not-allowed text-neutral-500 dark:text-neutral-400">
-                        <Settings className="w-5 h-5 mr-3" />
-                        Settings
-                    </a>
                 </div>
             </div>
         </div>

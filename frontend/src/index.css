@@ -1,0 +1,150 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+:root {
+  --font-size-base: 16px;
+}
+
+/* 自訂動畫 */
+@keyframes float {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0.6;
+  }
+
+  50% {
+    transform: translateY(-20px) scale(1.2);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.6;
+  }
+}
+
+.animate-float {
+  animation-name: float;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-duration: 3s;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+/* === 全站基底（黑色主題/白色主題）=== */
+@layer base {
+  :root {
+    /* Light Mode Variables */
+    --bg-page: #f8fafc;
+    /* slate-50 */
+    --bg-card: #ffffff;
+    /* Solid white for Bento */
+    --border-color: #cbd5e1;
+    /* slate-300 (darkened from slate-200) */
+    --text-primary: #000000;
+    /* pure black */
+    --text-secondary: #334155;
+    /* slate-700 (darker gray for secondary text) */
+    --accent-primary: #3b82f6;
+    /* blue-500 */
+    --accent-bg: rgba(59, 130, 246, 0.1);
+  }
+
+  .dark {
+    /* Dark Mode Variables */
+    --bg-page: #0a0a0a;
+    /* neutral-950 */
+    --bg-card: #171717;
+    /* neutral-900 */
+    --border-color: #404040;
+    /* neutral-700 (darkened from neutral-800 for visibility) */
+    --text-primary: #ffffff;
+    /* pure white */
+    --text-secondary: #d4d4d8;
+    /* zinc-300 (lighter gray for secondary text on dark) */
+    --accent-primary: #3b82f6;
+    --accent-bg: rgba(59, 130, 246, 0.15);
+  }
+
+  html {
+    font-size: var(--font-size-base);
+  }
+
+  /* body：整站底色、字色、抗鋸齒 */
+  body {
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    @apply antialiased transition-colors duration-300 font-sans;
+  }
+
+  /* 文字選取時的藍色光暈 */
+  ::selection {
+    @apply bg-blue-500/30;
+  }
+}
+
+/* === 可重用元件類（之後寫畫面直接套 class 即可）=== */
+@layer components {
+
+  /* Bento Grid Box / 卡片 */
+  .card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    @apply rounded-xl transition-all duration-200;
+  }
+
+  /* Dark mode specific stronger shadow */
+  .dark .card {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Light mode soft shadow */
+  :root:not(.dark) .card {
+    @apply shadow-sm hover:shadow-md;
+  }
+
+  /* 小膠囊標籤（chip） */
+  .chip {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors duration-200 font-medium text-sm;
+  }
+
+  /* 主要按鈕（Soft UI） */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 active:scale-95 text-white font-medium transition-all duration-200 shadow-sm hover:shadow-md dark:shadow-none;
+  }
+
+  /* 次要幽靈按鈕（深色 hover） */
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors duration-200;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.15s ease-out;
+}

@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# 環境變數（含金鑰，不進 git）
+.env
+
+# 後端是獨立的 git repo
+/yarag/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,4 +1,5 @@
-﻿const EduRagHeader = () => {
+﻿// EDU-RAG 聊天頁標題列。
+const EduRagHeader = () => {
   return (
     <div className="flex items-center justify-between mb-8 py-2">
       <div className="flex items-center space-x-3">
@@ -6,7 +7,7 @@
           AI
         </div>
         <div>
-          <h1 className="text-lg font-bold text-text-primary-light dark:text-gray-100 tracking-wide">
+          <h1 className="text-lg font-bold text-black dark:text-white tracking-wide">
             RAG 系統
           </h1>
         </div>

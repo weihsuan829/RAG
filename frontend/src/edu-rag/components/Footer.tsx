@@ -1,3 +1,4 @@
+// 聊天頁底部版權資訊。
 const Footer = () => {
     return (
         <footer className="mt-auto py-4 text-center text-xs text-text-muted-light dark:text-text-muted-dark border-t border-transparent dark:border-border-dark/50">
