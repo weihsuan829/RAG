@@ -113,7 +113,7 @@ const EduRagUploadPage = () => {
                     <Upload className="w-8 h-8" />
                 </div>
                 <h3 className="text-lg font-medium text-black dark:text-white">點擊上傳文件</h3>
-                <p className="text-black dark:text-neutral-400 mt-2">支援 PDF, Word (.docx), TXT</p>
+                <p className="text-black dark:text-neutral-400 mt-2">支援 PDF、Word (.docx)、Excel (.xlsx)、Markdown (.md)、TXT，單檔上限 4MB</p>
             </div>
             <input
                 ref={fileInputRef}
