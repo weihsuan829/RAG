@@ -1,24 +1,30 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, ArrowRight, ArrowLeft } from 'lucide-react';
+import { login, setToken } from '../edu-rag/services/api';
 
 const LoginPage = () => {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
-    // 傳統帳號密碼登入模擬
-    const handleLogin = (e: React.FormEvent) => {
+    // 傳統帳號密碼登入
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        // 模擬後端 API 驗證時間
-        setTimeout(() => {
-            // 假設驗證成功，發放 Mock Token
-            localStorage.setItem('auth_token', 'mock_token_123');
-            // 驗證成功後導向系統 Dashboard
-            navigate('/app/dashboard');
-        }, 1200);
+        setError('');
+        try {
+            const res = await login(email, password); // email 欄位當 username 用
+            setToken(res.access_token);
+            localStorage.setItem('display_name', res.display_name);
+            navigate('/app/edu-rag/chat');
+        } catch (err) {
+            setError(err instanceof Error && err.message !== 'unauthorized' ? err.message : '帳號或密碼錯誤');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -96,6 +102,7 @@ const LoginPage = () => {
                         </button>
                     </div>
                 </form>
+                {error && <p className="text-sm text-red-500 text-center mt-3">{error}</p>}
             </div>
 
             <p className="mt-8 text-xs text-slate-400 dark:text-neutral-600 text-center">

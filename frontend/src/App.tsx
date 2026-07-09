@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Sidebar from './layouts/Sidebar';
 import EduRagChatPage from './edu-rag/pages/EduRagChatPage';
 import EduRagUploadPage from './edu-rag/pages/EduRagUploadPage';
@@ -11,8 +11,27 @@ import { Menu, Moon, Sun } from 'lucide-react';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { listUploads } from './edu-rag/utils/uploadStore';
 import { SYSTEM_DOCS } from './edu-rag/mockEduRag';
+import { fetchMe, getToken } from './edu-rag/services/api';
 import logoWhite from './assets/新北教育局-logo白.png';
 import logoBlack from './assets/新北教育局-logo黑.png';
+
+// 路由守衛：確保只有帶有效 token 的使用者能進入 /app/* 內容。
+// 需在 <Router> 內部使用 useNavigate，因此放在 /app/* 的 element 內層。
+const RequireAuth = ({ children }: { children: React.ReactNode }) => {
+  const [status, setStatus] = useState<'checking' | 'ok'>('checking');
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!getToken()) {
+      navigate('/login', { replace: true });
+      return;
+    }
+    fetchMe()
+      .then(() => setStatus('ok'))
+      .catch(() => navigate('/login', { replace: true }));
+  }, [navigate]);
+  if (status === 'checking') return null;
+  return <>{children}</>;
+};
 
 // 全域版面配置元件：
 // 負責側邊欄、頂部工具列、主內容容器，以及字體大小/主題切換等跨頁 UI。
@@ -218,22 +237,24 @@ const App = () => {
 
           {/* Protected Routes nested under /app with Sidebar Layout */}
           <Route path="/app/*" element={
-            <Layout>
-              <Routes>
-                {/* 進入根路徑時導向預設聊天頁 */}
-                <Route path="/" element={<Navigate to="/app/edu-rag/chat" replace />} />
-                {/* 儀表板頁 */}
-                <Route path="dashboard" element={<Dashboard />} />
-                {/* EDU-RAG 聊天頁 */}
-                <Route path="edu-rag/chat" element={<EduRagChatPage />} />
-                {/* EDU-RAG 管理：上傳頁 */}
-                <Route path="edu-rag/admin/upload" element={<EduRagUploadPage />} />
-                {/* EDU-RAG 管理：文件列表頁 */}
-                <Route path="edu-rag/admin/docs" element={<EduRagDocsPage />} />
-                {/* EDU-RAG 管理：文件詳細頁（動態 id） */}
-                <Route path="edu-rag/admin/docs/:id" element={<EduRagDocDetailPage />} />
-              </Routes>
-            </Layout>
+            <RequireAuth>
+              <Layout>
+                <Routes>
+                  {/* 進入根路徑時導向預設聊天頁 */}
+                  <Route path="/" element={<Navigate to="/app/edu-rag/chat" replace />} />
+                  {/* 儀表板頁 */}
+                  <Route path="dashboard" element={<Dashboard />} />
+                  {/* EDU-RAG 聊天頁 */}
+                  <Route path="edu-rag/chat" element={<EduRagChatPage />} />
+                  {/* EDU-RAG 管理：上傳頁 */}
+                  <Route path="edu-rag/admin/upload" element={<EduRagUploadPage />} />
+                  {/* EDU-RAG 管理：文件列表頁 */}
+                  <Route path="edu-rag/admin/docs" element={<EduRagDocsPage />} />
+                  {/* EDU-RAG 管理：文件詳細頁（動態 id） */}
+                  <Route path="edu-rag/admin/docs/:id" element={<EduRagDocDetailPage />} />
+                </Routes>
+              </Layout>
+            </RequireAuth>
           } />
         </Routes>
       </Router>
