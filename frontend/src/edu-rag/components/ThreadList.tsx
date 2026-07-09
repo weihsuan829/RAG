@@ -6,16 +6,16 @@ import type { Thread } from '../mockEduRag';
 interface ThreadListProps {
     // 對話列表資料來源。
     threads: Thread[];
-    // 目前選中的對話 id。
-    activeThreadId: string;
+    // 目前選中的對話 id（null 代表尚未建立的新對話）。
+    activeThreadId: string | null;
     // 切換對話事件。
     onSelectThread: (id: string) => void;
     // 新增對話事件。
     onNewThread: () => void;
     // 刪除對話事件。
     onDeleteThread: (id: string, e: React.MouseEvent) => void;
-    // 重新命名事件。
-    onRenameThread: (id: string, newTitle: string) => void;
+    // 重新命名事件（後端未提供改名 API，暫不掛載）。
+    onRenameThread?: (id: string, newTitle: string) => void;
 }
 
 // 左側對話清單：提供新建對話、搜尋欄與對話切換。
@@ -45,7 +45,7 @@ const ThreadList: React.FC<ThreadListProps> = ({
     const saveEditing = (id: string, e?: React.MouseEvent | React.KeyboardEvent) => {
         e?.stopPropagation();
         if (editValue.trim()) {
-            onRenameThread(id, editValue);
+            onRenameThread?.(id, editValue);
         }
         setEditingId(null);
         setEditValue("");

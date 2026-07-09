@@ -3,15 +3,13 @@ import {
   Send,
   Mic,
   RotateCcw,
-  Settings,
   MessageSquare,
-  Sparkles,
   Square
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Message } from "../mockEduRag";
 import MessageSkeleton from './MessageSkeleton';
-import { streamChatCompletion } from '../services/openaiService';
+import { streamChat, type Citation as ApiCitation } from '../services/api';
 
 type BrowserSpeechRecognitionEvent = {
   resultIndex: number;
@@ -49,6 +47,8 @@ interface ChatWindowProps {
   setInputText: (text: string) => void;
   onSendMessage: (message: Message) => void;
   onUpdateMessage?: (message: Message) => void;
+  activeThreadId: string | null;
+  onThreadCreated: (threadId: string) => void;
   activeThreadTitle?: string;
   isLoading?: boolean;
 }
@@ -59,35 +59,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   setInputText,
   onSendMessage,
   onUpdateMessage,
+  activeThreadId,
+  onThreadCreated,
   activeThreadTitle = "對話區",
   isLoading = false,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
-  const settingsRef = useRef<HTMLDivElement>(null);
   const inputTextRef = useRef(inputText);
   const listeningBaseTextRef = useRef("");
   const finalTranscriptRef = useRef("");
 
   const [isListening, setIsListening] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [sending, setSending] = useState(false);
-  const [settings, setSettings] = useState({
-    onlyFromDocs: true,
-    showReasoning: false
-  });
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
-        setIsSettingsOpen(false);
-      }
-    };
-    if (isSettingsOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isSettingsOpen]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -142,13 +126,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     setIsListening(false);
   };
 
-  const parseContent = (content: string) => {
-    const thoughtMatch = content.match(/<thought>([\s\S]*?)<\/thought>/);
-    const thought = thoughtMatch ? thoughtMatch[1].trim() : null;
-    const answer = content.replace(/<thought>[\s\S]*?<\/thought>/, "").trim();
-    return { thought, answer };
-  };
-
   const handleSend = async () => {
     if (!inputText.trim() || sending) return;
 
@@ -159,15 +136,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
+    const messageText = inputText;
     onSendMessage(userMessage);
     setInputText("");
     setSending(true);
-
-    const chatHistory = messages.map(m => ({
-      role: m.role as 'user' | 'assistant',
-      content: m.content
-    }));
-    chatHistory.push({ role: 'user', content: userMessage.content });
 
     const assistantId = (Date.now() + 1).toString();
     const assistantMessage: Message = {
@@ -180,27 +152,38 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
     onSendMessage(assistantMessage);
 
-    let accumulatedText = "";
+    // threadId 於串流期間固定：新對話送出後 onDone 才會拿到新建的 thread_id，
+    // 不應在同一次請求中途改變送出的 threadId。
+    const threadIdAtSend = activeThreadId;
+    // 累積目前訊息的出處，讓後續 onUpdate/onDone 的整包更新不會把已收到的出處蓋掉。
+    let latestCitations: Message['citations'];
 
-    await streamChatCompletion(chatHistory, {
-      onlyFromDocs: settings.onlyFromDocs,
-      showReasoning: settings.showReasoning,
-      onUpdate: (fullText) => {
-        accumulatedText = fullText;
-        onUpdateMessage?.({ ...assistantMessage, content: fullText });
+    await streamChat(messageText, threadIdAtSend, {
+      onCitations: (citations: ApiCitation[]) => {
+        latestCitations = citations.map((c, i) => ({
+          id: String(i),
+          docName: c.doc_name,
+          snippet: c.snippet,
+          similarity: c.similarity,
+        }));
+        onUpdateMessage?.({ ...assistantMessage, content: "", citations: latestCitations });
       },
-      onError: (err) => {
-        onUpdateMessage?.({ 
-          ...assistantMessage, 
-          content: accumulatedText + `\n\n⚠️ Error: ${err instanceof Error ? err.message : String(err)}`,
-          isThinking: false 
+      onUpdate: (fullText) => {
+        onUpdateMessage?.({ ...assistantMessage, content: fullText, citations: latestCitations });
+      },
+      onDone: ({ thread_id }) => {
+        onUpdateMessage?.({ ...assistantMessage, isThinking: false, citations: latestCitations });
+        if (!threadIdAtSend) onThreadCreated(thread_id);
+        setSending(false);
+      },
+      onError: () => {
+        onUpdateMessage?.({
+          ...assistantMessage,
+          content: '⚠️ 系統暫時無法取得資料，請稍後再試',
+          isThinking: false,
         });
         setSending(false);
       },
-      onComplete: () => {
-        onUpdateMessage?.({ ...assistantMessage, content: accumulatedText, isThinking: false });
-        setSending(false);
-      }
     });
   };
 
@@ -224,66 +207,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           </div>
         </div>
 
-        <div className="flex space-x-2 relative" ref={settingsRef}>
+        <div className="flex space-x-2 relative">
           <button className="p-2 rounded-xl bg-transparent hover:bg-slate-100 dark:hover:bg-neutral-800 text-neutral-500 transition-all">
             <RotateCcw className="w-5 h-5" />
           </button>
-          <button 
-            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-            className={`p-2 rounded-xl transition-all ${isSettingsOpen ? 'bg-sky-500/10 text-sky-600' : 'bg-transparent hover:bg-slate-100 dark:hover:bg-neutral-800 text-neutral-500'}`}
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-
-          <AnimatePresence>
-            {isSettingsOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="absolute right-0 top-full mt-2 w-72 z-50 overflow-hidden"
-              >
-                <div className="card p-4 backdrop-blur-xl bg-white/90 dark:bg-neutral-900/90 border border-slate-200 dark:border-neutral-800 shadow-2xl space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-white">對話設定</h3>
-                    <div className="text-[10px] bg-sky-500/10 text-sky-600 px-1.5 py-0.5 rounded font-mono">Expert</div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between group">
-                    <div className="flex flex-col">
-                      <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">模型精確度調節</span>
-                      <span className="text-[10px] text-neutral-500">僅從上傳的文件內容回覆</span>
-                    </div>
-                    <button 
-                      onClick={() => setSettings(s => ({ ...s, onlyFromDocs: !s.onlyFromDocs }))}
-                      className={`relative w-10 h-5 rounded-full transition-colors ${settings.onlyFromDocs ? 'bg-sky-500' : 'bg-slate-300 dark:bg-neutral-700'}`}
-                    >
-                      <motion.div 
-                        animate={{ x: settings.onlyFromDocs ? 22 : 2 }}
-                        className="absolute top-1 w-3 h-3 bg-white rounded-full shadow-sm"
-                      />
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between group">
-                    <div className="flex flex-col">
-                      <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">思維鏈</span>
-                      <span className="text-[10px] text-neutral-500">顯示 AI 回覆的思考歷程</span>
-                    </div>
-                    <button 
-                      onClick={() => setSettings(s => ({ ...s, showReasoning: !s.showReasoning }))}
-                      className={`relative w-10 h-5 rounded-full transition-colors ${settings.showReasoning ? 'bg-sky-500' : 'bg-slate-300 dark:bg-neutral-700'}`}
-                    >
-                      <motion.div 
-                        animate={{ x: settings.showReasoning ? 22 : 2 }}
-                        className="absolute top-1 w-3 h-3 bg-white rounded-full shadow-sm"
-                      />
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       </div>
 
@@ -306,7 +233,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             <AnimatePresence initial={false}>
               {messages.map((message, index) => {
                 const isAssistant = message.role === "assistant";
-                const { thought, answer } = parseContent(message.content);
 
                 return (
                   <motion.div
@@ -316,33 +242,21 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     className={`flex flex-col ${isAssistant ? "items-start" : "items-end"}`}
                   >
                     <div className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-sm border ${isAssistant ? "bg-white dark:bg-neutral-800 border-slate-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200" : "bg-sky-500 border-sky-400 text-white"}`}>
-                      {isAssistant && thought && (
-                        <div className="mb-3 pb-3 border-b border-slate-100 dark:border-neutral-700/50">
-                          <div className="flex items-center space-x-2 text-[10px] font-bold text-sky-500 mb-1 uppercase tracking-wider">
-                            <Sparkles className="w-3 h-3" />
-                            <span>Thinking Process</span>
-                          </div>
-                          <p className="text-xs text-neutral-500 dark:text-neutral-400 italic leading-relaxed">
-                            {thought}
-                          </p>
-                        </div>
-                      )}
-                      
                       <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                        {isAssistant && message.isThinking && !answer ? (
+                        {isAssistant && message.isThinking && !message.content ? (
                           <span className="flex items-center space-x-1">
                             <span className="w-1.5 h-1.5 bg-sky-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
                             <span className="w-1.5 h-1.5 bg-sky-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
                             <span className="w-1.5 h-1.5 bg-sky-500 rounded-full animate-bounce" />
                           </span>
-                        ) : answer || message.content}
+                        ) : message.content}
                       </p>
 
                       {isAssistant && message.citations && message.citations.length > 0 && !message.isThinking && (
                         <div className="mt-4 pt-3 border-t border-slate-100 dark:border-neutral-700/50 space-y-2">
                           {message.citations.map((c) => (
                             <div key={c.id} className="text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-sky-500 transition-colors cursor-help">
-                              📄 {c.docName} (p.{c.page})
+                              📄 {c.docName}
                             </div>
                           ))}
                         </div>
