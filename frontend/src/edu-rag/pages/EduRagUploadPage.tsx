@@ -1,6 +1,15 @@
 ﻿import { useRef, useState } from 'react';
 import { Upload, FileType, CheckCircle2 } from 'lucide-react';
 import { saveUpload, updateUpload, type UploadRecord, type UploadStatus } from '../utils/uploadStore';
+import { requestUploadUrl, uploadToR2 } from '../services/api';
+
+// 前端白名單：五種允許的 MIME 類型（PDF、Word、Excel、純文字、Markdown）。
+const ALLOWED = new Set([
+    'text/plain', 'text/markdown', 'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+]);
+const MAX_BYTES = 4 * 1024 * 1024;
 
 // 文件上傳頁：負責選檔、入庫、狀態更新與隊列顯示。
 const EduRagUploadPage = () => {
@@ -22,33 +31,55 @@ const EduRagUploadPage = () => {
     };
 
     // 更新單一檔案狀態（同時更新畫面狀態與儲存至資料庫）。
-    const updateStatus = async (id: string, status: UploadStatus) => {
-        setUploads(prev => prev.map(item => item.id === id ? { ...item, status, updatedAt: Date.now() } : item));
-        await updateUpload(id, { status, updatedAt: Date.now() });
+    const updateStatus = async (id: string, status: UploadStatus, errorMessage?: string) => {
+        setUploads(prev => prev.map(item => item.id === id ? { ...item, status, errorMessage, updatedAt: Date.now() } : item));
+        await updateUpload(id, { status, errorMessage, updatedAt: Date.now() });
+    };
+
+    // 單一檔案的真實上傳流程：前端驗證 → 取得預簽名 URL → PUT 至 R2 → 更新狀態。
+    const processFile = async (file: File, itemId: string) => {
+        if (!ALLOWED.has(file.type)) {
+            await updateStatus(itemId, 'error', '不支援的檔案格式（限 PDF、Word、Excel、文字檔）');
+            return;
+        }
+        if (file.size > MAX_BYTES) {
+            await updateStatus(itemId, 'error', '檔案超過 4MB 上限');
+            return;
+        }
+        try {
+            const res = await requestUploadUrl(file);
+            await updateStatus(itemId, 'parsing'); // 顯示為「上傳中」
+            await uploadToR2(file, res);
+            await updateStatus(itemId, 'completed'); // 顯示為「已上傳，索引處理中」
+        } catch (err) {
+            await updateStatus(itemId, 'error', err instanceof Error ? err.message : '上傳失敗');
+        }
     };
 
     // 檔案選擇後：
     // 1) 建立上傳紀錄 (暫存於 state 並寫入 DB)
-    // 2) 以 timeout 模擬 parsing/completed 狀態流轉
+    // 2) 依序驗證與呼叫後端 API 完成真實上傳
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(event.target.files ?? []);
         if (files.length === 0) return;
 
-        const newItems: UploadRecord[] = files.map((file) => ({
-            id: crypto?.randomUUID?.() ?? `${file.name}-${file.size}-${file.lastModified}`,
-            name: file.name,
-            sizeBytes: file.size,
-            type: file.type || 'application/octet-stream',
-            updatedAt: Date.now(),
-            status: 'uploading',
-            blob: file
+        const newItems: Array<{ record: UploadRecord; file: File }> = files.map((file) => ({
+            record: {
+                id: crypto?.randomUUID?.() ?? `${file.name}-${file.size}-${file.lastModified}`,
+                name: file.name,
+                sizeBytes: file.size,
+                type: file.type || 'application/octet-stream',
+                updatedAt: Date.now(),
+                status: 'uploading',
+                blob: file
+            },
+            file
         }));
 
-        newItems.forEach(async (item) => {
-            await saveUpload(item);
-            setUploads((prev) => [item, ...prev]);
-            setTimeout(() => { void updateStatus(item.id, 'parsing'); }, 600);
-            setTimeout(() => { void updateStatus(item.id, 'completed'); }, 1800);
+        newItems.forEach(async ({ record, file }) => {
+            await saveUpload(record);
+            setUploads((prev) => [record, ...prev]);
+            void processFile(file, record.id);
         });
 
         event.target.value = '';
@@ -58,13 +89,15 @@ const EduRagUploadPage = () => {
     const formatSize = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
     const statusLabel: Record<UploadStatus, string> = {
         uploading: '上傳中',
-        parsing: '解析中',
-        completed: '完成'
+        parsing: '上傳中',
+        completed: '已上傳，索引處理中',
+        error: '失敗'
     };
     const statusStep: Record<UploadStatus, number> = {
         uploading: 0,
         parsing: 1,
-        completed: 2
+        completed: 2,
+        error: 0
     };
 
     return (
@@ -117,17 +150,24 @@ const EduRagUploadPage = () => {
                                     </div>
                                 </div>
                                 <div className="flex items-center space-x-3">
-                                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-slate-100 dark:bg-neutral-800 text-black dark:text-neutral-300">
+                                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${file.status === 'error'
+                                        ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                                        : 'bg-slate-100 dark:bg-neutral-800 text-black dark:text-neutral-300'
+                                        }`}>
                                         {statusLabel[file.status]}
                                     </span>
                                 </div>
                             </div>
 
+                            {file.status === 'error' && file.errorMessage && (
+                                <p className="text-sm text-red-600 dark:text-red-400 mb-4">{file.errorMessage}</p>
+                            )}
+
                             {/* Stepper */}
                             <div className="relative">
                                 <div className="absolute top-1/2 left-0 w-full h-1 bg-slate-200 dark:bg-neutral-800 -translate-y-1/2 z-0"></div>
                                 <div
-                                    className="absolute top-1/2 left-0 h-1 bg-green-500 -translate-y-1/2 transition-all duration-500 z-0"
+                                    className={`absolute top-1/2 left-0 h-1 -translate-y-1/2 transition-all duration-500 z-0 ${file.status === 'error' ? 'bg-red-500' : 'bg-green-500'}`}
                                     style={{ width: `${(statusStep[file.status] / 2) * 100}%` }}
                                 ></div>
 

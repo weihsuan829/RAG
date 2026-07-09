@@ -10,8 +10,7 @@ import LoginPage from './pages/LoginPage';
 import { Menu, Moon, Sun } from 'lucide-react';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { listUploads } from './edu-rag/utils/uploadStore';
-import { SYSTEM_DOCS } from './edu-rag/mockEduRag';
-import { fetchMe, getToken } from './edu-rag/services/api';
+import { fetchMe, getToken, listDocuments } from './edu-rag/services/api';
 import logoWhite from './assets/新北教育局-logo白.png';
 import logoBlack from './assets/新北教育局-logo黑.png';
 
@@ -152,12 +151,17 @@ const Dashboard = () => {
   // 文件清單狀態，型別來自 uploadStore 的 UploadRecord。 (及系統預設文件)
   const [docs, setDocs] = useState<any[]>([]);
 
-  // 重新載入文件資料。
+  // 重新載入文件資料：本地上傳紀錄 + 伺服器已索引文件。
   const refreshDocs = async () => {
     const items = await listUploads();
-    // 合併系統預設文件
-    const combined = [...items, ...SYSTEM_DOCS];
-    setDocs(combined);
+    let serverDocs: { name: string }[] = [];
+    try {
+      const remote = await listDocuments();
+      serverDocs = remote.map((d) => ({ name: d.name.split('/').pop() || d.name }));
+    } catch {
+      serverDocs = [];
+    }
+    setDocs([...items, ...serverDocs]);
   };
 
   // 初始化與視窗重新聚焦時刷新資料，確保跨頁操作後數據仍同步。

@@ -32,7 +32,7 @@ export interface Doc {
     tags: string[];
 }
 
-export type UploadStatus = 'uploading' | 'parsing' | 'completed';
+export type UploadStatus = 'uploading' | 'parsing' | 'completed' | 'error';
 
 // IndexedDB 中單一上傳文件的資料結構。
 export type UploadRecord = {
@@ -43,6 +43,7 @@ export type UploadRecord = {
     updatedAt: number;
     status: UploadStatus;
     blob: Blob;
+    errorMessage?: string;
 };
 
 const DB_NAME = 'edu-rag-uploads';

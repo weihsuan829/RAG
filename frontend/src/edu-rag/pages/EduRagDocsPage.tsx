@@ -2,14 +2,24 @@
 import { Search, Filter, RefreshCw, Trash2, Download, Maximize2, Minimize2 } from 'lucide-react';
 import { renderAsync } from 'docx-preview';
 import * as XLSX from 'xlsx';
-import { deleteUpload, getUpload, listUploads, type UploadRecord, type Doc } from '../utils/uploadStore';
-import { SYSTEM_DOCS } from '../mockEduRag';
+import { deleteUpload, getUpload, listUploads, type UploadRecord } from '../utils/uploadStore';
+import { listDocuments } from '../services/api';
 import { Link } from 'react-router-dom';
+
+// 伺服器端已索引文件的顯示型別（去掉路徑前綴後的檔名 + 唯讀資訊，無本地 blob 可預覽）。
+type ServerDoc = {
+    id: string;
+    name: string;
+    type: string;
+    updatedAt: number;
+    sizeLabel: string;
+    isServer: true;
+};
 
 // 文件管理頁：列表、搜尋、預覽、下載與刪除。
 const EduRagDocsPage = () => {
     // 已上傳文件清單與搜尋字串。
-    const [docs, setDocs] = useState<Array<UploadRecord | (Doc & { isSystem?: boolean })>>([]);
+    const [docs, setDocs] = useState<Array<UploadRecord | ServerDoc>>([]);
     const [query, setQuery] = useState('');
     // 預覽 modal 狀態（URL/檔名/類型/Blob）。
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -25,15 +35,37 @@ const EduRagDocsPage = () => {
     const [confirmTarget, setConfirmTarget] = useState<UploadRecord | null>(null);
     const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
 
-    // 重新讀取文件資料。
+    // 依副檔名判斷顯示用的檔案類型標籤。
+    const inferType = (name: string) => {
+        const lowerName = name.toLowerCase();
+        if (lowerName.endsWith('.pdf')) return 'application/pdf';
+        if (lowerName.endsWith('.docx')) return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')) return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        return 'text/plain';
+    };
+
+    // 重新讀取文件資料：本地上傳紀錄（可預覽/刪除） + 伺服器已索引文件（唯讀清單）。
     const refreshDocs = async () => {
         const items = await listUploads();
-        // 將系統內建文件標記為 isSystem 並合併
-        const combined = [
-            ...items,
-            ...SYSTEM_DOCS.map(d => ({ ...d, isSystem: true }))
-        ];
-        setDocs(combined);
+        let serverDocs: ServerDoc[] = [];
+        try {
+            const remote = await listDocuments();
+            serverDocs = remote.map((d) => {
+                // 去掉路徑前綴，只顯示檔名。
+                const displayName = d.name.split('/').pop() || d.name;
+                return {
+                    id: `server-${d.name}`,
+                    name: displayName,
+                    type: inferType(displayName),
+                    updatedAt: new Date(d.updated_at).getTime(),
+                    sizeLabel: `${(d.size_bytes / 1024).toFixed(0)} KB`,
+                    isServer: true as const,
+                };
+            });
+        } catch {
+            serverDocs = [];
+        }
+        setDocs([...items, ...serverDocs]);
     };
 
     // 初次載入與視窗回焦時刷新，避免跨頁操作後資料過期。
@@ -51,49 +83,27 @@ const EduRagDocsPage = () => {
         };
     }, [previewUrl]);
 
-    // 僅顯示 completed 且符合搜尋條件的文件。
+    // 僅顯示 completed 的本地上傳紀錄，以及所有伺服器已索引文件，並符合搜尋條件。
     const completedDocs = useMemo(() => {
         return docs
-            .filter(doc => (doc as UploadRecord).status === 'completed' || (doc as any).isSystem)
+            .filter(doc => (doc as UploadRecord).status === 'completed' || (doc as ServerDoc).isServer)
             .filter(doc => doc.name.toLowerCase().includes(query.toLowerCase()));
     }, [docs, query]);
 
-    // 開啟預覽：讀取紀錄並建立 object URL。
+    // 開啟預覽：讀取紀錄並建立 object URL（伺服器已索引文件無本地 blob，不支援預覽）。
     const openPreview = async (id: string) => {
         const doc = docs.find(d => d.id === id);
-        if (!doc) return;
+        if (!doc || (doc as ServerDoc).isServer) return;
 
         if (previewUrl) URL.revokeObjectURL(previewUrl);
 
-        if ((doc as any).isSystem) {
-            // 系統文件預設路徑在 /docs/
-            const url = `/docs/${doc.name}`;
-            setPreviewUrl(url);
-            setPreviewName(doc.name);
-            setPreviewType(doc.type || 'application/octet-stream');
-
-            // 重要：為 Word/Excel 獲取 Blob 以便解析內容
-            const lowerName = doc.name.toLowerCase();
-            if (lowerName.endsWith('.docx') || lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')) {
-                try {
-                    const resp = await fetch(url);
-                    const blob = await resp.blob();
-                    setPreviewBlob(blob);
-                } catch (err) {
-                    console.error('Failed to fetch system doc blob:', err);
-                }
-            } else {
-                setPreviewBlob(null);
-            }
-        } else {
-            const record = await getUpload(id);
-            if (!record) return;
-            const url = URL.createObjectURL(record.blob);
-            setPreviewUrl(url);
-            setPreviewName(record.name);
-            setPreviewType(record.type || 'application/octet-stream');
-            setPreviewBlob(record.blob);
-        }
+        const record = await getUpload(id);
+        if (!record) return;
+        const url = URL.createObjectURL(record.blob);
+        setPreviewUrl(url);
+        setPreviewName(record.name);
+        setPreviewType(record.type || 'application/octet-stream');
+        setPreviewBlob(record.blob);
     };
 
     // 關閉預覽：釋放 URL 並重置狀態。
@@ -162,8 +172,8 @@ const EduRagDocsPage = () => {
     // 刪除文件後刷新列表；若正在預覽則一併關閉。
     const handleDelete = async (id: string) => {
         const doc = docs.find(d => d.id === id);
-        if ((doc as any)?.isSystem) {
-            alert('系統預設文件無法刪除');
+        if ((doc as ServerDoc)?.isServer) {
+            alert('已索引文件無法在此刪除');
             return;
         }
         await deleteUpload(id);
@@ -171,30 +181,21 @@ const EduRagDocsPage = () => {
         if (previewUrl) closePreview();
     };
 
-    // 下載文件：建立暫時下載連結並觸發 click。
+    // 下載文件：建立暫時下載連結並觸發 click（伺服器已索引文件無本地檔案可下載）。
     const handleDownload = async (id: string) => {
         const doc = docs.find(d => d.id === id);
-        if (!doc) return;
+        if (!doc || (doc as ServerDoc).isServer) return;
 
-        if ((doc as any).isSystem) {
-            const link = document.createElement('a');
-            link.href = `/docs/${doc.name}`;
-            link.download = doc.name;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-        } else {
-            const record = await getUpload(id);
-            if (!record) return;
-            const url = URL.createObjectURL(record.blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = record.name;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            URL.revokeObjectURL(url);
-        }
+        const record = await getUpload(id);
+        if (!record) return;
+        const url = URL.createObjectURL(record.blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = record.name;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
     };
 
     // 依 MIME/type + 副檔名回傳顯示用類型標籤。
@@ -247,6 +248,7 @@ const EduRagDocsPage = () => {
                         <tr>
                             <th className="px-6 py-4">文件名稱</th>
                             <th className="px-6 py-4">類型</th>
+                            <th className="px-6 py-4">大小</th>
                             <th className="px-6 py-4">狀態</th>
                             <th className="px-6 py-4">更新時間</th>
                             <th className="px-6 py-4 text-right">操作</th>
@@ -255,60 +257,77 @@ const EduRagDocsPage = () => {
                     <tbody className="divide-y divide-slate-200 dark:divide-neutral-800">
                         {completedDocs.length === 0 && (
                             <tr>
-                                <td className="px-6 py-8 text-center text-slate-500 dark:text-neutral-400" colSpan={5}>
+                                <td className="px-6 py-8 text-center text-slate-500 dark:text-neutral-400" colSpan={6}>
                                     尚無完成入庫的文件
                                 </td>
                             </tr>
                         )}
-                        {completedDocs.map(doc => (
-                            <tr key={doc.id} className="hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition">
-                                <td className="px-6 py-4 font-medium text-black dark:text-white">
-                                    <button
-                                        className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline"
-                                        onClick={() => openPreview(doc.id)}
-                                    >
-                                        {doc.name}
-                                    </button>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className="px-2 py-1 rounded text-xs font-medium bg-slate-200 dark:bg-neutral-700 text-slate-800 dark:text-neutral-200 uppercase">
-                                        {typeLabel(doc.type, doc.name)}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
-                                        完成
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-slate-600 dark:text-neutral-400">
-                                    {new Date(doc.updatedAt).toLocaleString()}
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end space-x-2">
-                                        {(doc as any).isSystem ? (
-                                            <span className="p-1.5 text-slate-300 dark:text-neutral-600 cursor-not-allowed" title="系統內建無法刪除">
-                                                <Trash2 className="w-4 h-4" />
-                                            </span>
+                        {completedDocs.map(doc => {
+                            const isServer = (doc as ServerDoc).isServer === true;
+                            const sizeLabel = isServer
+                                ? (doc as ServerDoc).sizeLabel
+                                : `${((doc as UploadRecord).sizeBytes / 1024).toFixed(0)} KB`;
+                            return (
+                                <tr key={doc.id} className="hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition">
+                                    <td className="px-6 py-4 font-medium text-black dark:text-white">
+                                        {isServer ? (
+                                            <span>{doc.name}</span>
                                         ) : (
                                             <button
-                                                className="p-1.5 text-slate-500 dark:text-neutral-400 hover:text-red-600 dark:hover:text-red-400 rounded transition"
-                                                title="刪除"
-                                                onClick={() => setConfirmTarget(doc as UploadRecord)}
+                                                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline"
+                                                onClick={() => openPreview(doc.id)}
                                             >
-                                                <Trash2 className="w-4 h-4" />
+                                                {doc.name}
                                             </button>
                                         )}
-                                        <button
-                                            className="p-1.5 text-slate-500 dark:text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400 rounded transition"
-                                            title="下載"
-                                            onClick={() => handleDownload(doc.id)}
-                                        >
-                                            <Download className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className="px-2 py-1 rounded text-xs font-medium bg-slate-200 dark:bg-neutral-700 text-slate-800 dark:text-neutral-200 uppercase">
+                                            {typeLabel(doc.type, doc.name)}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-slate-600 dark:text-neutral-400">
+                                        {sizeLabel}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
+                                            已索引
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-slate-600 dark:text-neutral-400">
+                                        {new Date(doc.updatedAt).toLocaleDateString('zh-TW')}
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex items-center justify-end space-x-2">
+                                            {isServer ? (
+                                                <span className="p-1.5 text-slate-300 dark:text-neutral-600 cursor-not-allowed" title="已索引文件無法在此刪除">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </span>
+                                            ) : (
+                                                <button
+                                                    className="p-1.5 text-slate-500 dark:text-neutral-400 hover:text-red-600 dark:hover:text-red-400 rounded transition"
+                                                    title="刪除"
+                                                    onClick={() => setConfirmTarget(doc as UploadRecord)}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                            <button
+                                                className={`p-1.5 rounded transition ${isServer
+                                                    ? 'text-slate-300 dark:text-neutral-600 cursor-not-allowed'
+                                                    : 'text-slate-500 dark:text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400'
+                                                    }`}
+                                                title="下載"
+                                                disabled={isServer}
+                                                onClick={() => handleDownload(doc.id)}
+                                            >
+                                                <Download className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
