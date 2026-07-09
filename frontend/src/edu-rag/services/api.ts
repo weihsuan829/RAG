@@ -14,12 +14,12 @@ const handleUnauthorized = () => {
     window.location.href = '/login';
 };
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}, redirectOn401 = true): Promise<T> {
     const res = await fetch(`${BASE}${path}`, {
         ...options,
         headers: { 'Content-Type': 'application/json', ...authHeaders(), ...options.headers },
     });
-    if (res.status === 401) {
+    if (res.status === 401 && redirectOn401) {
         handleUnauthorized();
         throw new Error('unauthorized');
     }
@@ -54,7 +54,7 @@ export const login = (username: string, password: string) =>
     request<{ access_token: string; display_name: string }>('/api/v1/auth/login', {
         method: 'POST',
         body: JSON.stringify({ username, password }),
-    });
+    }, false);
 
 export const fetchMe = () =>
     request<{ username: string; display_name: string }>('/api/v1/auth/me');

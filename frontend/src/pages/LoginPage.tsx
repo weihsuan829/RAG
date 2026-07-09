@@ -21,7 +21,7 @@ const LoginPage = () => {
             localStorage.setItem('display_name', res.display_name);
             navigate('/app/edu-rag/chat');
         } catch (err) {
-            setError(err instanceof Error && err.message !== 'unauthorized' ? err.message : '帳號或密碼錯誤');
+            setError(err instanceof Error && err.message && err.message !== 'unauthorized' ? err.message : '帳號或密碼錯誤');
         } finally {
             setLoading(false);
         }
