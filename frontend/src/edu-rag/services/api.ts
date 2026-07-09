@@ -99,13 +99,19 @@ export async function streamChat(
             const dataLine = block.split('\n').find((l) => l.startsWith('data: '));
             if (!eventLine || !dataLine) return;
             const event = eventLine.slice(7).trim();
-            const data = JSON.parse(dataLine.slice(6));
-            if (event === 'citations') handlers.onCitations(data);
+            let data: unknown;
+            try {
+                data = JSON.parse(dataLine.slice(6));
+            } catch {
+                console.warn('[api] 略過無法解析的 SSE 區塊');
+                return;
+            }
+            if (event === 'citations') handlers.onCitations(data as Citation[]);
             else if (event === 'delta') {
-                fullText += data.text;
+                fullText += (data as { text: string }).text;
                 handlers.onUpdate(fullText);
-            } else if (event === 'done') handlers.onDone(data);
-            else if (event === 'error') handlers.onError(new Error(data.message));
+            } else if (event === 'done') handlers.onDone(data as { thread_id: string; message_id: number });
+            else if (event === 'error') handlers.onError(new Error((data as { message: string }).message));
         };
 
         while (true) {
