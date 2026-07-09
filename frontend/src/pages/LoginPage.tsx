@@ -51,14 +51,15 @@ const LoginPage = () => {
                 <form onSubmit={handleLogin} className="space-y-6">
                     <div className="space-y-2">
                         <label className="text-sm font-semibold text-black dark:text-white uppercase tracking-wider text-[11px]">
-                            員工帳號 (Email)
+                            帳號
                         </label>
                         <div className="relative group">
                             <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-neutral-500 group-focus-within:text-blue-500 transition-colors" />
                             <input
-                                type="email"
+                                type="text"
+                                autoComplete="username"
                                 required
-                                placeholder="admin@ntpc.edu.tw"
+                                placeholder="請輸入帳號"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-neutral-950 border border-slate-200 dark:border-neutral-800 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all text-black dark:text-white placeholder-slate-400 dark:placeholder-neutral-600 font-medium"
@@ -106,7 +107,7 @@ const LoginPage = () => {
             </div>
 
             <p className="mt-8 text-xs text-slate-400 dark:text-neutral-600 text-center">
-                Mock Login Interface - 2026 UI/UX Pro Max Edition
+                新北市教育局 RAG 檢索系統
             </p>
         </div>
     );
