@@ -123,7 +123,7 @@ const ThreadList: React.FC<ThreadListProps> = ({
                                             <MessageSquare className="w-4 h-4" />
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            {isEditing ? (
+                                            {onRenameThread && isEditing ? (
                                                 <div className="flex items-center space-x-1" onClick={e => e.stopPropagation()}>
                                                     <input
                                                         autoFocus
@@ -152,12 +152,14 @@ const ThreadList: React.FC<ThreadListProps> = ({
 
                                         {/* Action Buttons (Visible on hover or when active) */}
                                         <div className={`flex-shrink-0 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity ${isEditing ? 'hidden' : ''}`}>
-                                            <button
-                                                onClick={(e) => startEditing(thread.id, thread.title, e)}
-                                                className="p-1 hover:bg-slate-200 dark:hover:bg-neutral-700 rounded-md transition-colors text-neutral-400 hover:text-sky-500"
-                                            >
-                                                <Edit3 className="w-3.5 h-3.5" />
-                                            </button>
+                                            {onRenameThread && (
+                                                <button
+                                                    onClick={(e) => startEditing(thread.id, thread.title, e)}
+                                                    className="p-1 hover:bg-slate-200 dark:hover:bg-neutral-700 rounded-md transition-colors text-neutral-400 hover:text-sky-500"
+                                                >
+                                                    <Edit3 className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={(e) => onDeleteThread(thread.id, e)}
                                                 className="p-1 hover:bg-slate-200 dark:hover:bg-neutral-700 rounded-md transition-colors text-neutral-400 hover:text-rose-500"

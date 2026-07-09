@@ -49,6 +49,9 @@ interface ChatWindowProps {
   onUpdateMessage?: (message: Message) => void;
   activeThreadId: string | null;
   onThreadCreated: (threadId: string) => void;
+  // 串流結束時，若使用者已中途切換離開送出當下的對話，用來通知父層刷新左側列表
+  // （不切換使用者當前畫面，僅更新 preview/updatedAt）。未提供時該情境靜默略過。
+  onThreadListStale?: () => void;
   activeThreadTitle?: string;
   isLoading?: boolean;
 }
@@ -61,6 +64,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   onUpdateMessage,
   activeThreadId,
   onThreadCreated,
+  onThreadListStale,
   activeThreadTitle = "對話區",
   isLoading = false,
 }) => {
@@ -69,6 +73,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const inputTextRef = useRef(inputText);
   const listeningBaseTextRef = useRef("");
   const finalTranscriptRef = useRef("");
+  // 追蹤「當下」的 activeThreadId（非閉包捕捉值），供串流 onDone 判斷使用者是否已中途切換對話。
+  const activeThreadIdRef = useRef(activeThreadId);
 
   const [isListening, setIsListening] = useState(false);
   const [sending, setSending] = useState(false);
@@ -80,6 +86,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   useEffect(() => {
     inputTextRef.current = inputText;
   }, [inputText]);
+
+  useEffect(() => {
+    activeThreadIdRef.current = activeThreadId;
+  }, [activeThreadId]);
 
   const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
   const speechSupported = Boolean(SpeechRecognitionCtor);
@@ -173,7 +183,17 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       },
       onDone: ({ thread_id }) => {
         onUpdateMessage?.({ ...assistantMessage, isThinking: false, citations: latestCitations });
-        if (!threadIdAtSend) onThreadCreated(thread_id);
+        if (!threadIdAtSend) {
+          // 全新對話：一定要告知父層新建的 thread_id，讓左側列表出現這筆對話（會切換過去）。
+          onThreadCreated(thread_id);
+        } else if (activeThreadIdRef.current !== threadIdAtSend) {
+          // 使用者在串流期間切換了對話，導致 handleUpdateMessage 在 messages 陣列裡找不到
+          // 對應訊息而 no-op（訊息已被切換後的 setMessages 取代）。後端仍已把這則回覆存檔，
+          // 只是目前畫面沒有反映最新的 preview/updatedAt。用 threadIdAtSend（送出當下捕捉的
+          // 值，而非可能已改變的 activeThreadId prop）驅動一次「僅刷新列表、不搶走使用者當前
+          // 畫面」的更新；使用者之後重新點回該對話時，fetchThread 會自我修復並補上這則訊息。
+          onThreadListStale?.();
+        }
         setSending(false);
       },
       onError: () => {
@@ -252,7 +272,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                         ) : message.content}
                       </p>
 
-                      {isAssistant && message.citations && message.citations.length > 0 && !message.isThinking && (
+                      {isAssistant && message.citations && message.citations.length > 0 && (
                         <div className="mt-4 pt-3 border-t border-slate-100 dark:border-neutral-700/50 space-y-2">
                           {message.citations.map((c) => (
                             <div key={c.id} className="text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-sky-500 transition-colors cursor-help">

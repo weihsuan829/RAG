@@ -75,6 +75,12 @@ const EduRagChatPage = () => {
                 newMessages[index] = updatedMsg;
                 return newMessages;
             }
+            // 找不到對應訊息：通常是使用者在串流期間切換到別的對話，
+            // 此時 messages 陣列已被 setActiveThreadId → fetchThread 換掉，
+            // 送出當下那則 assistant 訊息已不在畫面上，這裡的更新是刻意被丟棄（intentional drop）。
+            // 後端仍會把完整回覆存檔；使用者之後重新點回原本的對話時，
+            // fetchThread 會重新抓取完整訊息與 citations，達到自我修復（self-heal）。
+            // ChatWindow 的 onDone 也會在偵測到這種情況時呼叫 onThreadListStale 刷新左側列表。
             return prev;
         });
     };
@@ -137,6 +143,7 @@ const EduRagChatPage = () => {
                                     onUpdateMessage={handleUpdateMessage}
                                     activeThreadId={activeThreadId}
                                     onThreadCreated={handleThreadCreated}
+                                    onThreadListStale={() => void refreshThreads()}
                                     activeThreadTitle={threads.find(t => t.id === activeThreadId)?.title || "對話區"}
                                     isLoading={isInitialLoading}
                                 />
