@@ -1,0 +1,8 @@
+# 開發環境映像：Vite dev server（熱重載）
+FROM node:22-alpine
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+EXPOSE 3100
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3100"]

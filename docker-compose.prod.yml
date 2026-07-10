@@ -1,0 +1,32 @@
+# 正式環境：前端 http://localhost:3200（nginx，API 走同源代理）、後端 http://localhost:9200
+# 啟動：docker compose -f docker-compose.prod.yml up -d --build
+# 建帳號：docker compose -f docker-compose.prod.yml exec backend uv run --no-sync create-user <帳號> <名稱>
+name: edu-rag-prod
+services:
+  backend:
+    build: ./backend
+    container_name: edu-rag-backend-prod
+    env_file: backend/.env
+    environment:
+      DATABASE_URL: sqlite:////data/prod.db
+    ports:
+      - "9200:8010"
+    volumes:
+      - edu_rag_db_prod:/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ""            # 相對路徑 → nginx 代理 → 無 CORS 問題
+    container_name: edu-rag-frontend-prod
+    ports:
+      - "3200:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  edu_rag_db_prod:

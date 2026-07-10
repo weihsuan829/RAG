@@ -1,0 +1,36 @@
+# 開發環境：前端 http://localhost:3100、後端 http://localhost:9100
+# 啟動：docker compose -f docker-compose.dev.yml up -d --build
+# 建帳號：docker compose -f docker-compose.dev.yml exec backend uv run --no-sync create-user <帳號> <名稱>
+name: edu-rag-dev
+services:
+  backend:
+    build: ./backend
+    container_name: edu-rag-backend-dev
+    command: ["uv", "run", "--no-sync", "uvicorn", "yarag.app:app", "--host", "0.0.0.0", "--port", "8010", "--reload"]
+    env_file: backend/.env
+    environment:
+      DATABASE_URL: sqlite:////data/dev.db
+      CORS_ORIGINS: http://localhost:3100,http://127.0.0.1:3100
+    ports:
+      - "9100:8010"
+    volumes:
+      - ./backend/src:/app/src          # 改後端程式碼即時生效
+      - edu_rag_db_dev:/data
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: edu-rag-frontend-dev
+    environment:
+      VITE_API_BASE_URL: http://localhost:9100
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./frontend/src:/app/src         # 改前端程式碼即時生效（HMR）
+      - ./frontend/index.html:/app/index.html
+    depends_on:
+      - backend
+
+volumes:
+  edu_rag_db_dev:

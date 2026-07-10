@@ -21,9 +21,27 @@ React 前端 ──► FastAPI 後端（登入/聊天記錄/上傳） ──► 
 | `scripts/` | `json_to_markdown.py` 資料轉檔、`upload_to_r2.py` 批次上傳 |
 | `docs/` | 架構文件、設計 spec、實作計畫 |
 
-## 啟動（開發）
+## 啟動（Docker，建議）
 
-前置：`backend/.env` 需含 R2 與 Cloudflare AI Search 的金鑰設定（參考 `backend/.env.example`，金鑰不進 git）。
+前置：`backend/.env` 需含 R2、Cloudflare AI Search 與 OpenAI 的金鑰設定（參考 `backend/.env.example`，金鑰不進 git）。
+
+| 環境 | 前端 | 後端 | 說明 |
+|---|---|---|---|
+| dev | http://localhost:3100 | http://localhost:9100 | 程式碼熱重載，資料庫 volume `edu-rag-dev` |
+| prod | http://localhost:3200 | http://localhost:9200 | 正式建置＋nginx 同源代理，資料庫 volume `edu-rag-prod` |
+
+```bash
+docker compose -f docker-compose.dev.yml up -d --build    # 開發環境
+docker compose -f docker-compose.prod.yml up -d --build   # 正式環境
+
+# 建帳號（各環境資料庫獨立，需分別建立）
+docker compose -f docker-compose.dev.yml exec backend uv run --no-sync create-user <帳號> <顯示名稱>
+
+# 停止
+docker compose -f docker-compose.dev.yml down
+```
+
+## 啟動（本機不走 Docker）
 
 ```bash
 # 後端（http://127.0.0.1:8010，API 文件在 /docs）
