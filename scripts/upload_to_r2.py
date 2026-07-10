@@ -1,6 +1,6 @@
 """將 data/markdown/ 的議案檔案上傳到 R2 bucket（bills/ 目錄下）。
 
-用法： cd yarag && uv run python ../scripts/upload_to_r2.py
+用法： cd backend && uv run python ../scripts/upload_to_r2.py
 """
 
 import sys

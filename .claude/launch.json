@@ -4,7 +4,7 @@
     {
       "name": "backend",
       "runtimeExecutable": "sh",
-      "runtimeArgs": ["-c", "cd yarag && uv run uvicorn yarag.app:app --reload --port 8010"],
+      "runtimeArgs": ["-c", "cd backend && uv run uvicorn yarag.app:app --reload --port 8010"],
       "port": 8010,
       "autoPort": false
     },

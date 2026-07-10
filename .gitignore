@@ -16,7 +16,7 @@ dist-ssr
 .env
 
 # 後端是獨立的 git repo
-/yarag/
+/backend/
 
 # 工作階段暫存（進度帳本、審查差異包）
 .superpowers/
