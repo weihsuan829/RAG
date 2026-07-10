@@ -35,6 +35,7 @@ export interface Citation {
     doc_name: string;
     snippet: string;
     similarity: number;
+    url?: string;
 }
 export interface ThreadSummary {
     id: string;
@@ -48,6 +49,7 @@ export interface ApiMessage {
     content: string;
     citations: Citation[] | null;
     created_at: string;
+    source: 'kb' | 'web';
 }
 
 export const login = (username: string, password: string) =>
@@ -68,7 +70,7 @@ export const deleteThreadApi = (id: string) =>
 export interface StreamHandlers {
     onCitations: (citations: Citation[]) => void;
     onUpdate: (fullText: string) => void;
-    onDone: (meta: { thread_id: string; message_id: number }) => void;
+    onDone: (meta: { thread_id: string; message_id: number; source: 'kb' | 'web' }) => void;
     onError: (error: unknown) => void;
 }
 
@@ -76,12 +78,13 @@ export async function streamChat(
     message: string,
     threadId: string | null,
     handlers: StreamHandlers,
+    mode: 'kb' | 'web' = 'kb',
 ) {
     try {
         const res = await fetch(`${BASE}/api/v1/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...authHeaders() },
-            body: JSON.stringify({ message, thread_id: threadId }),
+            body: JSON.stringify({ message, thread_id: threadId, mode }),
         });
         if (res.status === 401) {
             handleUnauthorized();
@@ -110,7 +113,7 @@ export async function streamChat(
             else if (event === 'delta') {
                 fullText += (data as { text: string }).text;
                 handlers.onUpdate(fullText);
-            } else if (event === 'done') handlers.onDone(data as { thread_id: string; message_id: number });
+            } else if (event === 'done') handlers.onDone(data as { thread_id: string; message_id: number; source: 'kb' | 'web' });
             else if (event === 'error') handlers.onError(new Error((data as { message: string }).message));
         };
 

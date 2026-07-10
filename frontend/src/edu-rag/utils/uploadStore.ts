@@ -12,6 +12,7 @@ export interface Message {
     content: string;
     timestamp: string;
     citations?: Citation[];
+    source?: 'kb' | 'web';
 }
 
 export interface Citation {
@@ -20,6 +21,7 @@ export interface Citation {
     page?: number;
     snippet: string;
     similarity: number;
+    url?: string;
 }
 
 export interface Doc {
