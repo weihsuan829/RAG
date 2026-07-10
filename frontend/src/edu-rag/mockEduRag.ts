@@ -13,6 +13,9 @@ export interface Message {
     timestamp: string;
     isThinking?: boolean;
     citations?: Citation[];
+    // assistant 訊息的回答來源：'kb'（知識庫）或 'web'（網路搜尋補充）。
+    // user 訊息不需要此欄位。
+    source?: 'kb' | 'web';
 }
 
 export interface Citation {
@@ -21,6 +24,7 @@ export interface Citation {
     page?: number;
     snippet: string;
     similarity: number;
+    url?: string;
 }
 
 export interface Doc {

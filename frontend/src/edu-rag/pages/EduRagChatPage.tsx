@@ -52,7 +52,9 @@ const EduRagChatPage = () => {
                     docName: c.doc_name,
                     snippet: c.snippet,
                     similarity: c.similarity,
+                    url: c.url,
                 })),
+                source: m.source,
             }))))
             .finally(() => setIsInitialLoading(false));
     }, [activeThreadId]);

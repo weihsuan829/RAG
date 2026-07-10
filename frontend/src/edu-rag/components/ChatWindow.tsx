@@ -136,19 +136,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     setIsListening(false);
   };
 
-  const handleSend = async () => {
-    if (!inputText.trim() || sending) return;
+  // 共用的送出流程：新增 user 氣泡（可選，web 補充時省略）＋assistant 佔位＋streamChat。
+  // mode 決定走 kb（知識庫）或 web（網路搜尋補充）。
+  const sendMessage = async (messageText: string, mode: 'kb' | 'web', userMessage: Message | null) => {
+    if (sending) return;
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: inputText,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    const messageText = inputText;
-    onSendMessage(userMessage);
-    setInputText("");
+    if (userMessage) {
+      onSendMessage(userMessage);
+    }
     setSending(true);
 
     const assistantId = (Date.now() + 1).toString();
@@ -157,7 +152,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       role: "assistant",
       content: "",
       isThinking: true,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      source: mode,
     };
 
     onSendMessage(assistantMessage);
@@ -175,14 +171,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           docName: c.doc_name,
           snippet: c.snippet,
           similarity: c.similarity,
+          url: c.url,
         }));
-        onUpdateMessage?.({ ...assistantMessage, content: "", citations: latestCitations });
+        onUpdateMessage?.({ ...assistantMessage, content: "", citations: latestCitations, source: mode });
       },
       onUpdate: (fullText) => {
-        onUpdateMessage?.({ ...assistantMessage, content: fullText, citations: latestCitations });
+        onUpdateMessage?.({ ...assistantMessage, content: fullText, citations: latestCitations, source: mode });
       },
-      onDone: ({ thread_id }) => {
-        onUpdateMessage?.({ ...assistantMessage, isThinking: false, citations: latestCitations });
+      onDone: ({ thread_id, source }) => {
+        onUpdateMessage?.({ ...assistantMessage, isThinking: false, citations: latestCitations, source });
         if (!threadIdAtSend) {
           // 全新對話：一定要告知父層新建的 thread_id，讓左側列表出現這筆對話（會切換過去）。
           onThreadCreated(thread_id);
@@ -204,7 +201,35 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         });
         setSending(false);
       },
-    });
+    }, mode);
+  };
+
+  const handleSend = async () => {
+    if (!inputText.trim() || sending) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: inputText,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    const messageText = inputText;
+    setInputText("");
+
+    await sendMessage(messageText, 'kb', userMessage);
+  };
+
+  // 「用網路搜尋補充」：找出該 assistant 訊息前一則 user 訊息的內容，以 mode:'web' 重新送出，
+  // 附加在同一對話尾端（不新增 user 氣泡，因為問題內容沒變）。
+  const handleWebFallback = (assistantIndex: number) => {
+    if (sending) return;
+    for (let i = assistantIndex - 1; i >= 0; i--) {
+      if (messages[i].role === 'user') {
+        void sendMessage(messages[i].content, 'web', null);
+        return;
+      }
+    }
   };
 
   return (
@@ -253,6 +278,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             <AnimatePresence initial={false}>
               {messages.map((message, index) => {
                 const isAssistant = message.role === "assistant";
+                const isWebSource = isAssistant && message.source === 'web';
+                const isErrorMessage = message.content.startsWith('⚠️ 系統暫時無法取得資料');
+                // 顯示「用網路搜尋補充」按鈕的條件：assistant 訊息、非串流中（isThinking）、非錯誤文案。
+                const showWebFallback = isAssistant && !message.isThinking && !isErrorMessage;
 
                 return (
                   <motion.div
@@ -261,7 +290,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     className={`flex flex-col ${isAssistant ? "items-start" : "items-end"}`}
                   >
-                    <div className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-sm border ${isAssistant ? "bg-white dark:bg-neutral-800 border-slate-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200" : "bg-sky-500 border-sky-400 text-white"}`}>
+                    <div
+                      className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-sm border ${
+                        isWebSource
+                          ? "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/60 text-neutral-800 dark:text-neutral-200"
+                          : isAssistant
+                            ? "bg-white dark:bg-neutral-800 border-slate-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-200"
+                            : "bg-sky-500 border-sky-400 text-white"
+                      }`}
+                    >
+                      {isWebSource && (
+                        <div className="mb-2 text-[10px] font-medium text-amber-700 dark:text-amber-400">
+                          🌐 網路資訊，僅供參考
+                        </div>
+                      )}
                       <p className="text-sm leading-relaxed whitespace-pre-wrap">
                         {isAssistant && message.isThinking && !message.content ? (
                           <span className="flex items-center space-x-1">
@@ -276,12 +318,27 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                         <div className="mt-4 pt-3 border-t border-slate-100 dark:border-neutral-700/50 space-y-2">
                           {message.citations.map((c) => (
                             <div key={c.id} className="text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-sky-500 transition-colors cursor-help">
-                              📄 {c.docName}
+                              {c.url ? (
+                                <>
+                                  📄 <a href={c.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-sky-500">{c.docName}</a>
+                                </>
+                              ) : (
+                                <>📄 {c.docName}</>
+                              )}
                             </div>
                           ))}
                         </div>
                       )}
                     </div>
+                    {showWebFallback && (
+                      <button
+                        onClick={() => handleWebFallback(index)}
+                        disabled={sending}
+                        className="mt-1 px-2 py-0.5 text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-sky-500 dark:hover:text-sky-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        🌐 用網路搜尋補充
+                      </button>
+                    )}
                     {message.timestamp && (
                       <span className="mt-1 px-2 text-[10px] text-neutral-400">
                         {message.timestamp}
