@@ -156,4 +156,9 @@ export async function uploadToR2(
 }
 
 export const listDocuments = () =>
-    request<{ name: string; size_bytes: number; updated_at: string }[]>('/api/v1/documents');
+    request<{ name: string; size_bytes: number; updated_at: string; display_name: string }[]>('/api/v1/documents');
+
+export const requestDownloadUrl = (key: string) =>
+    request<{ download_url: string; expires_in: number }>(
+        '/api/v1/documents/download?key=' + encodeURIComponent(key),
+    );

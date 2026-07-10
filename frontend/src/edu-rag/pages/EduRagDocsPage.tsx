@@ -3,12 +3,13 @@ import { Search, Filter, RefreshCw, Trash2, Download, Maximize2, Minimize2 } fro
 import { renderAsync } from 'docx-preview';
 import * as XLSX from 'xlsx';
 import { deleteUpload, getUpload, listUploads, type UploadRecord } from '../utils/uploadStore';
-import { listDocuments } from '../services/api';
+import { listDocuments, requestDownloadUrl } from '../services/api';
 import { Link } from 'react-router-dom';
 
-// 伺服器端已索引文件的顯示型別（去掉路徑前綴後的檔名 + 唯讀資訊，無本地 blob 可預覽）。
+// 伺服器端已索引文件的顯示型別（key 為儲存用名稱，name 為顯示用真名，無本地 blob 可預覽）。
 type ServerDoc = {
     id: string;
+    key: string;
     name: string;
     type: string;
     updatedAt: number;
@@ -34,6 +35,8 @@ const EduRagDocsPage = () => {
     // 刪除確認目標；有值時開啟確認 modal。
     const [confirmTarget, setConfirmTarget] = useState<UploadRecord | null>(null);
     const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
+    // 正在請求下載連結的伺服器文件 id，避免重複點擊。
+    const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
     // 依副檔名判斷顯示用的檔案類型標籤。
     const inferType = (name: string) => {
@@ -51,12 +54,11 @@ const EduRagDocsPage = () => {
         try {
             const remote = await listDocuments();
             serverDocs = remote.map((d) => {
-                // 去掉路徑前綴，只顯示檔名。
-                const displayName = d.name.split('/').pop() || d.name;
                 return {
                     id: `server-${d.name}`,
-                    name: displayName,
-                    type: inferType(displayName),
+                    key: d.name,
+                    name: d.display_name,
+                    type: inferType(d.display_name),
                     updatedAt: new Date(d.updated_at).getTime(),
                     sizeLabel: `${(d.size_bytes / 1024).toFixed(0)} KB`,
                     isServer: true as const,
@@ -198,6 +200,20 @@ const EduRagDocsPage = () => {
         URL.revokeObjectURL(url);
     };
 
+    // 下載伺服器已索引文件：向後端請求 presigned URL 後開啟新分頁下載（保留原始檔名）。
+    const handleServerDownload = async (doc: ServerDoc) => {
+        if (downloadingId === doc.id) return;
+        setDownloadingId(doc.id);
+        try {
+            const { download_url } = await requestDownloadUrl(doc.key);
+            window.open(download_url, '_blank');
+        } catch {
+            alert('下載失敗，請稍後再試');
+        } finally {
+            setDownloadingId(null);
+        }
+    };
+
     // 依 MIME/type + 副檔名回傳顯示用類型標籤。
     const typeLabel = (type: string, name: string) => {
         const lowerName = name.toLowerCase();
@@ -271,7 +287,13 @@ const EduRagDocsPage = () => {
                                 <tr key={doc.id} className="hover:bg-slate-50 dark:hover:bg-neutral-800/50 transition">
                                     <td className="px-6 py-4 font-medium text-black dark:text-white">
                                         {isServer ? (
-                                            <span>{doc.name}</span>
+                                            <button
+                                                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline cursor-pointer disabled:cursor-wait disabled:opacity-60"
+                                                onClick={() => handleServerDownload(doc as ServerDoc)}
+                                                disabled={downloadingId === doc.id}
+                                            >
+                                                {doc.name}
+                                            </button>
                                         ) : (
                                             <button
                                                 className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline"
@@ -313,13 +335,10 @@ const EduRagDocsPage = () => {
                                                 </button>
                                             )}
                                             <button
-                                                className={`p-1.5 rounded transition ${isServer
-                                                    ? 'text-slate-300 dark:text-neutral-600 cursor-not-allowed'
-                                                    : 'text-slate-500 dark:text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400'
-                                                    }`}
+                                                className="p-1.5 rounded transition text-slate-500 dark:text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400 disabled:opacity-60 disabled:cursor-wait"
                                                 title="下載"
-                                                disabled={isServer}
-                                                onClick={() => handleDownload(doc.id)}
+                                                disabled={isServer && downloadingId === doc.id}
+                                                onClick={() => (isServer ? handleServerDownload(doc as ServerDoc) : handleDownload(doc.id))}
                                             >
                                                 <Download className="w-4 h-4" />
                                             </button>

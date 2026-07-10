@@ -157,7 +157,7 @@ const Dashboard = () => {
     let serverDocs: { name: string }[] = [];
     try {
       const remote = await listDocuments();
-      serverDocs = remote.map((d) => ({ name: d.name.split('/').pop() || d.name }));
+      serverDocs = remote.map((d) => ({ name: d.display_name }));
     } catch {
       serverDocs = [];
     }
