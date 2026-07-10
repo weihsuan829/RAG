@@ -1,0 +1,34 @@
+{
+  "bill_no": 32592,
+  "mdsl": "新北市議會第4屆第4次定期會",
+  "examine": "第5審查會",
+  "caseno": "98",
+  "billtype": "議員提案",
+  "billclass": "教育",
+  "provider": "李倩萍",
+  "supportman": "陳永福,林裔綺,許昭興",
+  "comeno": "",
+  "comedate": "1131126",
+  "reason": "建請市府推動新建蘆洲成功國小風雨操場。",
+  "description": "本市蘆洲成功國小尚無風雨操場，嚴重影響辦理戶外體育課及大型活動權益，建請市府推動新建蘆洲成功國小風雨操場。",
+  "method": "如案由。",
+  "oneresult": "",
+  "examresult": "",
+  "result": "",
+  "tworesult": "",
+  "threeresult": "",
+  "government_responses": [
+    {
+      "reply_date": "1140212",
+      "reply_content": "一、本案本府教育局前已於113年11月6日辦理會勘。\r\n二、該校於114年1月16日提出「多功能風雨球場新建及周遭地坪整修工程」計畫，經審酌後，目前由學校修正申請計畫格式中，完成後送本府教育局協助爭取中央經費補助。",
+      "reply_state": "回覆已結案",
+      "reply_unit": "教育局"
+    },
+    {
+      "reply_date": "1131226",
+      "reply_content": "一、本案本府教育局前已於113年11月6日辦理會勘。\r\n二、目前由學校擬具申請計畫中，完成後送本府教育局協助爭取中央經費補助。",
+      "reply_state": "回覆未結案",
+      "reply_unit": "教育局"
+    }
+  ]
+}

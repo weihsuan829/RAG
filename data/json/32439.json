@@ -1,0 +1,28 @@
+{
+  "bill_no": 32439,
+  "mdsl": "新北市議會第4屆第4次定期會",
+  "examine": "第5審查會",
+  "caseno": "118",
+  "billtype": "議員提案",
+  "billclass": "教育",
+  "provider": "顏蔚慈",
+  "supportman": "蘇錦雄Paylang．Caya,戴瑋姗,張錦豪,林秉宥",
+  "comeno": "",
+  "comedate": "1131206",
+  "reason": "請新北市政府協助光榮國中改善風雨操場，整修球場地坪及週邊水溝蓋，讓師生在校教學訓練安全無虞。",
+  "description": "一、光榮國中現有四座戶外籃球場，長年使用及風雨曝曬導致地板及週邊水溝蓋破損龜裂嚴重。除造成教學訓練不便，也衍生安全疑慮。 二、請新北市政府協助光榮國中改善風雨操場環境，讓師生在校教學訓練安全無虞。",
+  "method": "如案由。",
+  "oneresult": "",
+  "examresult": "",
+  "result": "",
+  "tworesult": "",
+  "threeresult": "",
+  "government_responses": [
+    {
+      "reply_date": "1131225",
+      "reply_content": "本案本府教育局於113年7月10日新北府教工程字第1131351559號函同意補助學校「風雨操場整修案」。",
+      "reply_state": "回覆已結案",
+      "reply_unit": "教育局"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "bill_no": 31600,
+  "mdsl": "新北市議會第4屆第3次定期會",
+  "examine": "第5審查會",
+  "caseno": "112",
+  "billtype": "議員提案",
+  "billclass": "教育",
+  "provider": "彭佳芸,廖宜琨,鄭宇恩,張嘉玲",
+  "supportman": "",
+  "comeno": "",
+  "comedate": "1130701",
+  "reason": "建請市府媒合校園性平專業律師供師生諮詢。",
+  "description": "性別平等觀念已成為校內重要培養觀念，惟牽涉法律層面廣泛，建請市府媒合校園性平專業律師供師生諮詢。",
+  "method": "如案由。",
+  "oneresult": "",
+  "examresult": "",
+  "result": "",
+  "tworesult": "",
+  "threeresult": "",
+  "government_responses": [
+    {
+      "reply_date": "1130730",
+      "reply_content": "本府教育局除提供校園性別事件法律諮詢外，也將在相關教職員研習中安排校園性別事件法律議題並提供專業諮詢。",
+      "reply_state": "回覆未結案",
+      "reply_unit": "教育局"
+    },
+    {
+      "reply_date": "1130712",
+      "reply_content": "一、本府教育局除提供校園性別事件法律諮詢外，也將在相關教職員研習中安排校園性別事件法律議題並提供專業諮詢。\r\n二、本府於市府1樓聯合服務中心設置法律扶助櫃檯，亦提供線上(https://reurl.cc/dnDv6q)諮詢服務，及時提供師生專業法律諮詢。",
+      "reply_state": "回覆未結案",
+      "reply_unit": "教育局"
+    }
+  ]
+}

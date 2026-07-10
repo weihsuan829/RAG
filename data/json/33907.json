@@ -1,0 +1,28 @@
+{
+  "bill_no": 33907,
+  "mdsl": "新北市議會第4屆第5次定期會",
+  "examine": "第5審查會",
+  "caseno": "128",
+  "billtype": "議員提案",
+  "billclass": "教育",
+  "provider": "顏蔚慈",
+  "supportman": "林秉宥,張錦豪,戴瑋姗",
+  "comeno": "",
+  "comedate": "1140707",
+  "reason": "請新北市政府協助三重區明志國中改善排球場及周邊地坪。",
+  "description": "一、明志國中現有排球場因長年使用，地坪凹凸不平。師生運動容易跌倒受傷 二、請新北市政府協助明志國中改善排球場及周邊地坪，為師生打造安全運動環境。",
+  "method": "如案由。",
+  "oneresult": "",
+  "examresult": "",
+  "result": "",
+  "tworesult": "",
+  "threeresult": "",
+  "government_responses": [
+    {
+      "reply_date": "1140711",
+      "reply_content": "本府於114年3月10日新北府教工程字第1140439639號函同意補助學校「114年度改善排球場地坪整修工程案」。",
+      "reply_state": "回覆未結案",
+      "reply_unit": "教育局"
+    }
+  ]
+}

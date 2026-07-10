@@ -1,0 +1,28 @@
+{
+  "bill_no": 32607,
+  "mdsl": "新北市議會第4屆第4次定期會",
+  "examine": "第5審查會",
+  "caseno": "126",
+  "billtype": "議員提案",
+  "billclass": "教育",
+  "provider": "顏蔚慈",
+  "supportman": "林秉宥,張錦豪,戴瑋姗,蘇錦雄Paylang．Caya",
+  "comeno": "",
+  "comedate": "1131206",
+  "reason": "請新北市政府協助鷺江國小增設校園觸控海報機。",
+  "description": "請新北市府協助鷺江國小增設校園觸控海報機，持續擴充校內多媒體資源，為師生營造數位學習環境，提升教學品質。",
+  "method": "如案由。",
+  "oneresult": "",
+  "examresult": "",
+  "result": "",
+  "tworesult": "",
+  "threeresult": "",
+  "government_responses": [
+    {
+      "reply_date": "1131225",
+      "reply_content": "一、復貴會113年12月18日北議五字第1130005687號函。\r\n二、貴會顏議員蔚慈提案：「請新北市政府協助鷺江國小增設校園觸控海報機。」一案，本府辦理情形如下：本府已於113年12月10日核定補助學校經費，學校業已完成安裝（如附件）。",
+      "reply_state": "回覆已結案",
+      "reply_unit": "教育局"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "bill_no": 32437,
+  "mdsl": "新北市議會第4屆第4次定期會",
+  "examine": "第5審查會",
+  "caseno": "116",
+  "billtype": "議員提案",
+  "billclass": "教育",
+  "provider": "顏蔚慈",
+  "supportman": "蘇錦雄Paylang．Caya,戴瑋姗,張錦豪,林秉宥",
+  "comeno": "",
+  "comedate": "1131206",
+  "reason": "請新北市政府協助三重區三和國中增設校園電視牆，為師生營造數位學習環境，提升教學品質 。",
+  "description": "請新北市府協助三和國中增設校園電視牆，持續擴充校內多媒體資源，為師生營造數位學習環境，提升教學品質 。",
+  "method": "如案由。",
+  "oneresult": "",
+  "examresult": "",
+  "result": "",
+  "tworesult": "",
+  "threeresult": "",
+  "government_responses": [
+    {
+      "reply_date": "1131225",
+      "reply_content": "本案本府教育局於113年10月29日同意補助學校「113年度校園電視牆設置計畫案」。",
+      "reply_state": "回覆已結案",
+      "reply_unit": "教育局"
+    }
+  ]
+}

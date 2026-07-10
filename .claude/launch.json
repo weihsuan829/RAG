@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backend",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd yarag && uv run uvicorn yarag.app:app --reload --port 8010"],
+      "port": 8010,
+      "autoPort": false
+    },
+    {
+      "name": "frontend",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd frontend && npm run dev"],
+      "port": 5173
+    }
+  ]
+}

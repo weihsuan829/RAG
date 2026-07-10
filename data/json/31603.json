@@ -1,0 +1,28 @@
+{
+  "bill_no": 31603,
+  "mdsl": "新北市議會第4屆第3次定期會",
+  "examine": "第5審查會",
+  "caseno": "116",
+  "billtype": "議員提案",
+  "billclass": "教育",
+  "provider": "彭佳芸,廖宜琨,鄭宇恩,張嘉玲",
+  "supportman": "",
+  "comeno": "",
+  "comedate": "1130701",
+  "reason": "建請市府加強校園性平調查專業人員培訓誘因。",
+  "description": "本市舉辦高階校內性平調查專業人員培訓計畫，惟報名人數不如預期延期舉辦，建請市府加強校園性平調查專業人員培訓誘因。",
+  "method": "如案由。",
+  "oneresult": "",
+  "examresult": "",
+  "result": "",
+  "tworesult": "",
+  "threeresult": "",
+  "government_responses": [
+    {
+      "reply_date": "1130712",
+      "reply_content": "(一)本市目前有463名校園性別事件高階調查人才，3年內將增加至600名，其中12班以上學校，每校有1名，60班以上學校，每校有2名。\r\n(二)持續辦理初、進及高階校園性別事件調查專業人才培訓，通過培訓除頒發證書，也將表揚完成一定數量之調查人才。",
+      "reply_state": "回覆未結案",
+      "reply_unit": "教育局"
+    }
+  ]
+}

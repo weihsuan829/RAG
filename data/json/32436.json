@@ -1,0 +1,28 @@
+{
+  "bill_no": 32436,
+  "mdsl": "新北市議會第4屆第4次定期會",
+  "examine": "第5審查會",
+  "caseno": "115",
+  "billtype": "議員提案",
+  "billclass": "教育",
+  "provider": "顏蔚慈",
+  "supportman": "蘇錦雄Paylang．Caya,戴瑋姗,張錦豪,林秉宥",
+  "comeno": "",
+  "comedate": "1131206",
+  "reason": "請新北市政府協助蘆洲區三民高中改善校園廣播音響系統 。",
+  "description": "一、三民高中校內廣播系統已使用近20年，主機及喇叭經常故障。除了日常校園廣播不便利，也影響學校每年承辦學測、會考、分科測驗等重要測驗時的廣播鐘聲之播放，不只影響學校師生，也影響廣大考生。 二、請新北市政府積極協助三民高中全面汰換廣播系統，便利校務推動 。",
+  "method": "如案由。",
+  "oneresult": "",
+  "examresult": "",
+  "result": "",
+  "tworesult": "",
+  "threeresult": "",
+  "government_responses": [
+    {
+      "reply_date": "1131225",
+      "reply_content": "本府教育局於113年8月27日新北府教工程第1131691758號函同意補助學校「113年度三民高中全校廣播維護更新工程計畫」。",
+      "reply_state": "回覆已結案",
+      "reply_unit": "教育局"
+    }
+  ]
+}

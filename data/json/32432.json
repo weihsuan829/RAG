@@ -1,0 +1,28 @@
+{
+  "bill_no": 32432,
+  "mdsl": "新北市議會第4屆第4次定期會",
+  "examine": "第5審查會",
+  "caseno": "111",
+  "billtype": "議員提案",
+  "billclass": "教育",
+  "provider": "顏蔚慈",
+  "supportman": "蘇錦雄Paylang．Caya,戴瑋姗,張錦豪,林秉宥",
+  "comeno": "",
+  "comedate": "1131206",
+  "reason": "請新北市政府協助三重高中教室整修工程計畫。",
+  "description": "一、三重高中國小創校至今歷經50個寒暑，校舍結構幾經補強。近年來除了新建綜合教學大樓，校方也持續改建更新教室環境。 二、請新北市政府積極協助三重高中辦理教室整修工程，讓師生能有良好的學習環境。",
+  "method": "如案由。",
+  "oneresult": "",
+  "examresult": "",
+  "result": "",
+  "tworesult": "",
+  "threeresult": "",
+  "government_responses": [
+    {
+      "reply_date": "1131226",
+      "reply_content": "(一)本案本府教育局前已於113年4月29日同意補助該校辦理「教室整修工程計畫」。\r\n(二)學校業已於113年6月17日完成決標，並於113年7月16日辦理核結完竣。",
+      "reply_state": "回覆已結案",
+      "reply_unit": "教育局"
+    }
+  ]
+}

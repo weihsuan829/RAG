@@ -1,0 +1,28 @@
+{
+  "bill_no": 32441,
+  "mdsl": "新北市議會第4屆第4次定期會",
+  "examine": "第5審查會",
+  "caseno": "120",
+  "billtype": "議員提案",
+  "billclass": "教育",
+  "provider": "顏蔚慈",
+  "supportman": "蘇錦雄Paylang．Caya,戴瑋姗,張錦豪,林秉宥",
+  "comeno": "",
+  "comedate": "1131206",
+  "reason": "請新北市政府協助三重區五華國小改善校園廣播音響系統。",
+  "description": "一、五華國小校內廣播系統已使用多年，故障維修頻率高。 二、校園安全即時通報均須仰賴校內廣播系統，請新北市政府協助五華園小汰換廣播系統，提高系統效能、守護校園安全。",
+  "method": "如案由。",
+  "oneresult": "",
+  "examresult": "",
+  "result": "",
+  "tworesult": "",
+  "threeresult": "",
+  "government_responses": [
+    {
+      "reply_date": "1131226",
+      "reply_content": "一、本案本府教育局前已於113年5月22日同意補助該校辦理「113年度廣播系統改善計畫」。\r\n二、學校業已完成改善，並於113年6月3日辦理完畢。",
+      "reply_state": "回覆已結案",
+      "reply_unit": "教育局"
+    }
+  ]
+}

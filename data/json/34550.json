@@ -1,0 +1,28 @@
+{
+  "bill_no": 34550,
+  "mdsl": "新北市議會第4屆第6次定期會",
+  "examine": "第5審查會",
+  "caseno": "3",
+  "billtype": "議員提案",
+  "billclass": "教育",
+  "provider": "陳世軒",
+  "supportman": "蔡錦賢,李翁月娥,馬見Lahuy．Ipin",
+  "comeno": "",
+  "comedate": "1141013",
+  "reason": "建請教育局，協助新莊區國小，導入E化遠距設備，作為召開日常週會的雨天備案。",
+  "description": "建請教育局，協助新莊區國小，導入E化遠距設備，作為召開日常週會的雨天備案，也可以讓家長透過即時影像，了解週會內容關心孩子。",
+  "method": "如案由。",
+  "oneresult": "",
+  "examresult": "",
+  "result": "",
+  "tworesult": "",
+  "threeresult": "",
+  "government_responses": [
+    {
+      "reply_date": "1141020",
+      "reply_content": "一、復貴會114年10月9日北議五字第1140005116號函。\n二、貴會陳議員世軒提案：「建請教育局，協助新莊區國小，導入E化遠距設備，作為召開日常週會雨天備案。」一案，本府辦理情形如下：本府教育局於今（114）年完成全市班級教室為智慧教室，各校可透過線上會議方式召開週會。",
+      "reply_state": "回覆未結案",
+      "reply_unit": "教育局"
+    }
+  ]
+}

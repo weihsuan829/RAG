@@ -1,0 +1,28 @@
+{
+  "bill_no": 32434,
+  "mdsl": "新北市議會第4屆第4次定期會",
+  "examine": "第5審查會",
+  "caseno": "113",
+  "billtype": "議員提案",
+  "billclass": "教育",
+  "provider": "顏蔚慈",
+  "supportman": "蘇錦雄Paylang．Caya,戴瑋姗,張錦豪,林秉宥",
+  "comeno": "",
+  "comedate": "1131206",
+  "reason": "請新北市政府協助蘆洲區蘆洲國中改善校園廣播音響系統 。",
+  "description": "一、蘆洲國中校內廣播系統已使用超過十年，加上校園腹地達4.59公頃，廣播受限技術原因，覆蓋範圍有限且維修頻率高。使用相當不便，且校園安全即時通報均須仰賴校內廣播系統 。 二、請新北市政府協助蘆洲國中汰換廣播系統，提高系統效能、守護校園安全。",
+  "method": "如案由。",
+  "oneresult": "",
+  "examresult": "",
+  "result": "",
+  "tworesult": "",
+  "threeresult": "",
+  "government_responses": [
+    {
+      "reply_date": "1131225",
+      "reply_content": "本府教育局於113年10月29日新北府教工程字第1132136086號函同意補助學校「改善校園廣播音響系統」。",
+      "reply_state": "回覆已結案",
+      "reply_unit": "教育局"
+    }
+  ]
+}

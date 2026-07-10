@@ -1,0 +1,28 @@
+{
+  "bill_no": 33266,
+  "mdsl": "新北市議會第4屆第5次定期會",
+  "examine": "第5審查會",
+  "caseno": "4",
+  "billtype": "市府提案",
+  "billclass": "教育",
+  "provider": "新北市政府",
+  "supportman": "",
+  "comeno": "新北府教社字第1140844202號函",
+  "comedate": "1140502",
+  "reason": "財團法人新莊區瓊林教育基金會113年度決算案，提請審議。",
+  "description": "一、\t依財團法人法第55條第1項第2款、決算法第22條第2項及第31條暨新北市議會議事規則第8條辦理。 二、\t本案業經本市第735次市政會議通過，提請本市議會審議。",
+  "method": "",
+  "oneresult": "",
+  "examresult": "照案通過",
+  "result": "照案通過",
+  "tworesult": "",
+  "threeresult": "",
+  "government_responses": [
+    {
+      "reply_date": "1140707",
+      "reply_content": "本案業於114年7月7日轉知財團法人新莊區瓊林教育基金會113年度決算業經本市議會第4屆第5次定期會議決通過。",
+      "reply_state": "回覆未結案",
+      "reply_unit": "教育局"
+    }
+  ]
+}

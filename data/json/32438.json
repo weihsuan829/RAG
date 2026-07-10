@@ -1,0 +1,28 @@
+{
+  "bill_no": 32438,
+  "mdsl": "新北市議會第4屆第4次定期會",
+  "examine": "第5審查會",
+  "caseno": "117",
+  "billtype": "議員提案",
+  "billclass": "教育",
+  "provider": "顏蔚慈",
+  "supportman": "蘇錦雄Paylang．Caya,戴瑋姗,張錦豪,林秉宥",
+  "comeno": "",
+  "comedate": "1131206",
+  "reason": "請新北市政府協助二重國小改善校園遊戲器材，讓學童在校遊戲安全無虞。",
+  "description": "一、二重國小設有小學部及幼兒園，校內兒童遊戲器材已使用13年，已老舊不符合檢驗標準。 二、請新北市政府協助二重國小改善校園遊戲器材，讓學童在校遊戲安全無虞。",
+  "method": "如案由。",
+  "oneresult": "",
+  "examresult": "",
+  "result": "",
+  "tworesult": "",
+  "threeresult": "",
+  "government_responses": [
+    {
+      "reply_date": "1131225",
+      "reply_content": "一、本府教育局業於113年5月2日新北教衛環字第1130840143號函補助該校經費40萬元協助改善完成。\r\n二、該校兒童遊戲場已全數於113年6月5日取得合格檢驗報告。",
+      "reply_state": "回覆已結案",
+      "reply_unit": "教育局"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "bill_no": 32603,
+  "mdsl": "新北市議會第4屆第4次定期會",
+  "examine": "第5審查會",
+  "caseno": "122",
+  "billtype": "議員提案",
+  "billclass": "教育",
+  "provider": "顏蔚慈",
+  "supportman": "林秉宥,張錦豪,戴瑋姗,蘇錦雄Paylang．Caya",
+  "comeno": "",
+  "comedate": "1131206",
+  "reason": "請新北市政府協助蘆洲國小增設監視器，以維護師生安全。",
+  "description": "一、蘆洲國小現有4棟教學樓、共計72班，然現有監視器數量不足，設備相當老舊，亟需汰換添購監視器。 二、請新北市政府協助蘆洲國小增設監視器，以維護師生安全。",
+  "method": "如案由。",
+  "oneresult": "",
+  "examresult": "",
+  "result": "",
+  "tworesult": "",
+  "threeresult": "",
+  "government_responses": [
+    {
+      "reply_date": "1131224",
+      "reply_content": "二、貴會顏議員蔚慈提案：「請新北市政府協助蘆洲國小增設監視器，以維護師生安全」一案，本府辦理情形如下：本案已於113年7月30新北府教工程字第1131482788函核定補助學校經費。",
+      "reply_state": "回覆已結案",
+      "reply_unit": "教育局"
+    }
+  ]
+}
