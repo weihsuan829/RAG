@@ -200,13 +200,18 @@ const EduRagDocsPage = () => {
         URL.revokeObjectURL(url);
     };
 
-    // 下載伺服器已索引文件：向後端請求 presigned URL 後開啟新分頁下載（保留原始檔名）。
+    // 下載伺服器已索引文件：向後端請求 presigned URL 後通過錨點點擊下載（保留原始檔名、繞過彈出式視窗阻止器）。
     const handleServerDownload = async (doc: ServerDoc) => {
         if (downloadingId === doc.id) return;
         setDownloadingId(doc.id);
         try {
             const { download_url } = await requestDownloadUrl(doc.key);
-            window.open(download_url, '_blank');
+            const a = document.createElement('a');
+            a.href = download_url;
+            a.rel = 'noopener';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
         } catch {
             alert('下載失敗，請稍後再試');
         } finally {
