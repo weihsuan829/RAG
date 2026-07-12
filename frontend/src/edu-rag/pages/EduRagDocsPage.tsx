@@ -32,11 +32,14 @@ const EduRagDocsPage = () => {
     const [sheetNames, setSheetNames] = useState<string[]>([]);
     const [activeSheetName, setActiveSheetName] = useState<string>('');
     const [workbook, setWorkbook] = useState<XLSX.WorkBook | null>(null);
+    const [previewText, setPreviewText] = useState<string | null>(null);
     // 刪除確認目標；有值時開啟確認 modal。
     const [confirmTarget, setConfirmTarget] = useState<UploadRecord | null>(null);
     const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
     // 正在請求下載連結的伺服器文件 id，避免重複點擊。
     const [downloadingId, setDownloadingId] = useState<string | null>(null);
+    // 正在請求預覽內容的伺服器文件 id，避免重複點擊。
+    const [previewingId, setPreviewingId] = useState<string | null>(null);
 
     // 依副檔名判斷顯示用的檔案類型標籤。
     const inferType = (name: string) => {
@@ -92,20 +95,42 @@ const EduRagDocsPage = () => {
             .filter(doc => doc.name.toLowerCase().includes(query.toLowerCase()));
     }, [docs, query]);
 
-    // 開啟預覽：讀取紀錄並建立 object URL（伺服器已索引文件無本地 blob，不支援預覽）。
+    // 共用預覽開啟邏輯：建立 object URL 並設定預覽狀態（本地上傳與伺服器已索引文件共用）。
+    const openBlobPreview = (name: string, type: string, blob: Blob) => {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        const url = URL.createObjectURL(blob);
+        setPreviewUrl(url);
+        setPreviewName(name);
+        setPreviewType(type);
+        setPreviewBlob(blob);
+    };
+
+    // 開啟預覽：讀取紀錄並建立 object URL（本地上傳紀錄）。
     const openPreview = async (id: string) => {
         const doc = docs.find(d => d.id === id);
         if (!doc || (doc as ServerDoc).isServer) return;
 
-        if (previewUrl) URL.revokeObjectURL(previewUrl);
-
         const record = await getUpload(id);
         if (!record) return;
-        const url = URL.createObjectURL(record.blob);
-        setPreviewUrl(url);
-        setPreviewName(record.name);
-        setPreviewType(record.type || 'application/octet-stream');
-        setPreviewBlob(record.blob);
+        openBlobPreview(record.name, record.type || 'application/octet-stream', record.blob);
+    };
+
+    // 開啟預覽：伺服器已索引文件，透過 presigned URL 抓取內容後沿用同一套預覽 modal。
+    const handleServerPreview = async (doc: ServerDoc) => {
+        if (previewingId === doc.id) return;
+        setPreviewingId(doc.id);
+        try {
+            const { download_url } = await requestDownloadUrl(doc.key);
+            const res = await fetch(download_url);
+            if (!res.ok) throw new Error(`預覽下載失敗: ${res.status}`);
+            const blob = await res.blob();
+            // R2 回應的 content-type 可能是通用值，以副檔名為準判斷 MIME。
+            openBlobPreview(doc.name, inferType(doc.name), blob);
+        } catch {
+            alert('預覽失敗，請稍後再試');
+        } finally {
+            setPreviewingId(null);
+        }
     };
 
     // 關閉預覽：釋放 URL 並重置狀態。
@@ -119,6 +144,7 @@ const EduRagDocsPage = () => {
         setWorkbook(null);
         setSheetNames([]);
         setActiveSheetName('');
+        setPreviewText(null);
         setIsPreviewExpanded(false);
     };
 
@@ -160,6 +186,17 @@ const EduRagDocsPage = () => {
             setExcelData(normalized);
         });
     }, [previewBlob, previewName]);
+
+    // 文字預覽：純文字/Markdown 檔案，讀取 blob 內容顯示。
+    useEffect(() => {
+        const lowerName = previewName.toLowerCase();
+        const isText = previewType === 'text/plain' || lowerName.endsWith('.md') || lowerName.endsWith('.txt');
+        if (!previewBlob || !isText) {
+            setPreviewText(null);
+            return;
+        }
+        previewBlob.text().then(setPreviewText);
+    }, [previewBlob, previewName, previewType]);
 
     // 切換 Excel 分頁。
     const handleSheetChange = (name: string) => {
@@ -294,8 +331,8 @@ const EduRagDocsPage = () => {
                                         {isServer ? (
                                             <button
                                                 className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline cursor-pointer disabled:cursor-wait disabled:opacity-60"
-                                                onClick={() => handleServerDownload(doc as ServerDoc)}
-                                                disabled={downloadingId === doc.id}
+                                                onClick={() => handleServerPreview(doc as ServerDoc)}
+                                                disabled={previewingId === doc.id}
                                             >
                                                 {doc.name}
                                             </button>
@@ -435,6 +472,10 @@ const EduRagDocsPage = () => {
                                             </div>
                                         )}
                                     </div>
+                                </div>
+                            ) : previewType === 'text/plain' || previewName.toLowerCase().endsWith('.md') || previewName.toLowerCase().endsWith('.txt') ? (
+                                <div className="p-6 text-sm text-black dark:text-white whitespace-pre-wrap font-mono">
+                                    {previewText ?? '正在載入內容...'}
                                 </div>
                             ) : (
                                 <div className="p-6 text-slate-600 dark:text-neutral-400 text-sm">此檔案格式尚未支援預覽。</div>
