@@ -4,7 +4,9 @@ import {
   Mic,
   RotateCcw,
   MessageSquare,
-  Square
+  Square,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Message } from "../mockEduRag";
@@ -33,6 +35,56 @@ type BrowserSpeechRecognition = {
 };
 
 type BrowserSpeechRecognitionCtor = new () => BrowserSpeechRecognition;
+
+// 逐字打字機：串流中（active）以基礎速率 25 字/秒逐步顯示 content 的前綴；
+// 若累積落後（實際內容長度－已顯示長度）超過門檻，加速追趕，避免視覺上落後串流過久。
+// active 由 true 轉為 false（串流結束）時，立即補齊剩餘文字。
+// 非串流（歷史訊息 isThinking undefined、或錯誤文案）從掛載當下就直接顯示完整內容，無動畫。
+const TYPEWRITER_TICK_MS = 50;
+const TYPEWRITER_BASE_CPS = 25;
+const TYPEWRITER_BACKLOG_THRESHOLD = 60;
+
+const TypewriterText: React.FC<{ content: string; active: boolean }> = ({ content, active }) => {
+  const [displayed, setDisplayed] = useState<string>(() => (active ? "" : content));
+  const contentRef = useRef(content);
+  contentRef.current = content;
+  const accRef = useRef(0);
+
+  useEffect(() => {
+    if (!active) {
+      // 串流結束（或本來就不是串流訊息）：立即補齊，不做動畫。
+      setDisplayed(contentRef.current);
+      return;
+    }
+
+    accRef.current = 0;
+    const interval = setInterval(() => {
+      setDisplayed((prev) => {
+        const full = contentRef.current;
+        // 防禦性 clamp：理論上串流內容只會增長，但若某次更新造成長度變短
+        // （例如整包重送同樣內容），避免索引越界或顯示錯亂。
+        if (prev.length > full.length) return full;
+        if (prev.length >= full.length) return prev;
+
+        const backlog = full.length - prev.length;
+        if (backlog > TYPEWRITER_BACKLOG_THRESHOLD) {
+          // 落後太多：一次追趕一半，避免感覺卡在字串尾端太久。
+          return full.slice(0, prev.length + Math.ceil(backlog / 2));
+        }
+
+        accRef.current += TYPEWRITER_BASE_CPS * (TYPEWRITER_TICK_MS / 1000);
+        const step = Math.floor(accRef.current);
+        if (step < 1) return prev;
+        accRef.current -= step;
+        return full.slice(0, Math.min(full.length, prev.length + step));
+      });
+    }, TYPEWRITER_TICK_MS);
+
+    return () => clearInterval(interval);
+  }, [active]);
+
+  return <>{displayed}</>;
+};
 
 // 自動網路搜尋門檻：KB 回覆最高相似度低於此值（或完全沒有出處）視為「查無資料」，
 // 觸發自動網路搜尋補充。實測：直接命中≈0.80、弱相關≈0.57，故取 0.45 作為分界。
@@ -84,6 +136,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
   const [isListening, setIsListening] = useState(false);
   const [sending, setSending] = useState(false);
+  // 參考來源收合：per-message 展開狀態，純畫面用，不持久化，重新整理即重置為全部收合。
+  const [expandedCitations, setExpandedCitations] = useState<Set<string>>(new Set());
   // 「查無資料時自動網路搜尋」開關，per-browser 記憶於 localStorage，預設關閉。
   const [autoWebFallback, setAutoWebFallback] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -273,6 +327,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     await sendMessage(messageText, 'kb', userMessage);
   };
 
+  const toggleCitations = (key: string) => {
+    setExpandedCitations((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
   // 「用網路搜尋補充」：找出該 assistant 訊息前一則 user 訊息的內容，以 mode:'web' 重新送出，
   // 附加在同一對話尾端（不新增 user 氣泡，因為問題內容沒變）。
   const handleWebFallback = (assistantIndex: number) => {
@@ -356,6 +419,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 const isErrorMessage = message.content.startsWith('⚠️ 系統暫時無法取得資料');
                 // 顯示「用網路搜尋補充」按鈕的條件：assistant 訊息、非串流中（isThinking）、非錯誤文案。
                 const showWebFallback = isAssistant && !message.isThinking && !isErrorMessage;
+                const citationKey = message.id || String(index);
+                const citationsExpanded = expandedCitations.has(citationKey);
 
                 return (
                   <motion.div
@@ -385,22 +450,40 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                             <span className="w-1.5 h-1.5 bg-sky-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
                             <span className="w-1.5 h-1.5 bg-sky-500 rounded-full animate-bounce" />
                           </span>
+                        ) : isAssistant ? (
+                          <TypewriterText content={message.content} active={!!message.isThinking} />
                         ) : message.content}
                       </p>
 
                       {isAssistant && message.citations && message.citations.length > 0 && (
-                        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-neutral-700/50 space-y-2">
-                          {message.citations.map((c) => (
-                            <div key={c.id} className="text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-sky-500 transition-colors cursor-help">
-                              {c.url ? (
-                                <>
-                                  📄 <a href={c.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-sky-500">{c.docName}</a>
-                                </>
-                              ) : (
-                                <>📄 {c.docName}</>
-                              )}
+                        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-neutral-700/50">
+                          <button
+                            type="button"
+                            onClick={() => toggleCitations(citationKey)}
+                            className="flex items-center gap-1 text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-sky-500 transition-colors"
+                          >
+                            {citationsExpanded ? (
+                              <ChevronDown className="w-3 h-3" />
+                            ) : (
+                              <ChevronRight className="w-3 h-3" />
+                            )}
+                            <span>📚 參考來源 ({message.citations.length})</span>
+                          </button>
+                          {citationsExpanded && (
+                            <div className="mt-2 space-y-2">
+                              {message.citations.map((c) => (
+                                <div key={c.id} className="text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-sky-500 transition-colors cursor-help">
+                                  {c.url ? (
+                                    <>
+                                      📄 <a href={c.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-sky-500">{c.docName}</a>
+                                    </>
+                                  ) : (
+                                    <>📄 {c.docName}</>
+                                  )}
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          )}
                         </div>
                       )}
                     </div>
