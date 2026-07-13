@@ -467,7 +467,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                             ) : (
                               <ChevronRight className="w-3 h-3" />
                             )}
-                            <span>📚 參考來源 ({message.citations.length})</span>
+                            <span>參考來源 ({message.citations.length})</span>
                           </button>
                           {citationsExpanded && (
                             <div className="mt-2 space-y-2">
@@ -475,10 +475,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                                 <div key={c.id} className="text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-sky-500 transition-colors cursor-help">
                                   {c.url ? (
                                     <>
-                                      📄 <a href={c.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-sky-500">{c.docName}</a>
+                                      <a href={c.url} target="_blank" rel="noopener noreferrer" className="underline hover:text-sky-500">{c.docName}</a>
                                     </>
                                   ) : (
-                                    <>📄 {c.docName}</>
+                                    <>{c.docName}</>
                                   )}
                                 </div>
                               ))}
