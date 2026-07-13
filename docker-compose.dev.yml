@@ -16,6 +16,7 @@ services:
     volumes:
       - ./backend/src:/app/src          # 改後端程式碼即時生效
       - edu_rag_db_dev:/data
+    restart: unless-stopped
 
   frontend:
     build:
@@ -31,6 +32,7 @@ services:
       - ./frontend/index.html:/app/index.html
     depends_on:
       - backend
+    restart: unless-stopped
 
 volumes:
   edu_rag_db_dev:
