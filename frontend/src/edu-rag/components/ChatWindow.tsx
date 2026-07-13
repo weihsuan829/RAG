@@ -522,7 +522,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             }
           }}
           placeholder="輸入問題..."
-          className="flex-1 bg-white dark:bg-neutral-900 border-2 border-slate-300 dark:border-neutral-700 rounded-2xl p-4 text-black dark:text-white resize-none h-24 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20 outline-none transition-all placeholder-slate-500 dark:placeholder-neutral-500 shadow-sm shadow-slate-100"
+          className="flex-1 bg-white dark:bg-neutral-900 border-2 border-slate-300 dark:border-neutral-700 rounded-2xl p-4 text-black dark:text-white resize-none h-16 focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/20 outline-none transition-all placeholder-slate-500 dark:placeholder-neutral-500 shadow-sm shadow-slate-100"
         />
         <div className="flex flex-col gap-2">
           <button

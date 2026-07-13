@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import ThreadList from '../components/ThreadList';
 import ChatWindow from '../components/ChatWindow';
-import EduRagHeader from '../components/EduRagHeader';
 import Footer from '../components/Footer';
 import type { Message, Thread } from '../mockEduRag';
 import { listThreads, fetchThread, deleteThreadApi } from '../services/api';
@@ -107,8 +106,6 @@ const EduRagChatPage = () => {
     return (
         <div className="flex flex-col min-h-full font-sans overflow-hidden h-full">
             <div className="flex-1 flex flex-col p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto w-full h-full">
-                <EduRagHeader />
-
                 {/* Main Grid Layout */}
                 <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 min-h-0 h-full overflow-hidden">
 
