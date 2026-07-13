@@ -34,6 +34,12 @@ type BrowserSpeechRecognition = {
 
 type BrowserSpeechRecognitionCtor = new () => BrowserSpeechRecognition;
 
+// 自動網路搜尋門檻：KB 回覆最高相似度低於此值（或完全沒有出處）視為「查無資料」，
+// 觸發自動網路搜尋補充。實測：直接命中≈0.80、弱相關≈0.57，故取 0.45 作為分界。
+const AUTO_WEB_THRESHOLD = 0.45;
+
+const AUTO_WEB_FALLBACK_STORAGE_KEY = 'auto_web_fallback';
+
 declare global {
   interface Window {
     SpeechRecognition?: BrowserSpeechRecognitionCtor;
@@ -78,6 +84,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
   const [isListening, setIsListening] = useState(false);
   const [sending, setSending] = useState(false);
+  // 「查無資料時自動網路搜尋」開關，per-browser 記憶於 localStorage，預設關閉。
+  const [autoWebFallback, setAutoWebFallback] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem(AUTO_WEB_FALLBACK_STORAGE_KEY) === '1';
+  });
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -90,6 +101,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   useEffect(() => {
     activeThreadIdRef.current = activeThreadId;
   }, [activeThreadId]);
+
+  useEffect(() => {
+    window.localStorage.setItem(AUTO_WEB_FALLBACK_STORAGE_KEY, autoWebFallback ? '1' : '0');
+  }, [autoWebFallback]);
 
   const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
   const speechSupported = Boolean(SpeechRecognitionCtor);
@@ -138,7 +153,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
   // 共用的送出流程：新增 user 氣泡（可選，web 補充時省略）＋assistant 佔位＋streamChat。
   // mode 決定走 kb（知識庫）或 web（網路搜尋補充）。
-  const sendMessage = async (messageText: string, mode: 'kb' | 'web', userMessage: Message | null) => {
+  // threadIdOverride：僅供「查無資料時自動網路搜尋」在新對話情境下使用──此時
+  // activeThreadId prop 尚未因 onThreadCreated 而更新，需改用 onDone 直接回傳的
+  // thread_id，避免以過期的 null 送出而重複建立新對話。手動 🌐 按鈕不傳此參數，
+  // 行為與過去完全相同（沿用 activeThreadId）。
+  const sendMessage = async (
+    messageText: string,
+    mode: 'kb' | 'web',
+    userMessage: Message | null,
+    threadIdOverride?: string,
+  ) => {
     if (sending) return;
 
     if (userMessage) {
@@ -160,9 +184,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
     // threadId 於串流期間固定：新對話送出後 onDone 才會拿到新建的 thread_id，
     // 不應在同一次請求中途改變送出的 threadId。
-    const threadIdAtSend = activeThreadId;
+    const threadIdAtSend = threadIdOverride !== undefined ? threadIdOverride : activeThreadId;
     // 累積目前訊息的出處，讓後續 onUpdate/onDone 的整包更新不會把已收到的出處蓋掉。
     let latestCitations: Message['citations'];
+    // 自動網路搜尋開關：在送出當下（本次 sendMessage 呼叫）就地捕捉一份快照，
+    // 而非在 onDone（可能於使用者切換開關後才觸發）當下才讀取 state ──
+    // sendMessage 每次 render 都會重新建立，且是在事件當下同步呼叫，故此處讀到
+    // 的即是「送出那一刻」的開關狀態，語意上等同於用 ref 讀取，但不需額外的 ref。
+    const autoWebFallbackAtSend = autoWebFallback;
+    // 保證同一個問題最多只自動觸發一次網路搜尋（防禦性：即使 onDone 意外多次觸發）。
+    let autoWebFired = false;
 
     await streamChat(messageText, threadIdAtSend, {
       onCitations: (citations: ApiCitation[]) => {
@@ -192,6 +223,23 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           onThreadListStale?.();
         }
         setSending(false);
+
+        // 查無資料時自動網路搜尋：僅 kb 模式評估，且每個問題最多觸發一次。
+        // 判定「查無資料」＝完全沒有出處，或最高相似度低於 AUTO_WEB_THRESHOLD。
+        if (mode === 'kb' && !autoWebFired) {
+          const similarities = (latestCitations ?? []).map((c) => c.similarity);
+          const maxSimilarity = similarities.length > 0 ? Math.max(...similarities) : -Infinity;
+          const noResult = similarities.length === 0 || maxSimilarity < AUTO_WEB_THRESHOLD;
+
+          if (autoWebFallbackAtSend && noResult) {
+            autoWebFired = true;
+            // 與手動「🌐 用網路搜尋補充」按鈕行為一致：不新增 user 氣泡（問題沒變），
+            // 直接以 web 模式重送同一問題文字（來自本次送出的 closure，非索引查找）。
+            // thread_id 一律採用 onDone 剛回傳的值──新對話時這是唯一可靠、非過期的
+            // thread id（activeThreadId prop 此刻仍可能是 null）。
+            void sendMessage(messageText, 'web', null, thread_id);
+          }
+        }
       },
       onError: () => {
         onUpdateMessage?.({
@@ -252,7 +300,28 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           </div>
         </div>
 
-        <div className="flex space-x-2 relative">
+        <div className="flex items-center space-x-3 relative">
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] text-neutral-500 dark:text-neutral-400 select-none whitespace-nowrap">
+              查無資料時自動網路搜尋
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={autoWebFallback}
+              aria-label="查無資料時自動網路搜尋"
+              onClick={() => setAutoWebFallback((prev) => !prev)}
+              className={`relative w-9 h-5 rounded-full shrink-0 transition-colors ${
+                autoWebFallback ? "bg-sky-500" : "bg-slate-300 dark:bg-neutral-700"
+              }`}
+            >
+              <motion.div
+                className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow"
+                animate={{ x: autoWebFallback ? 16 : 0 }}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              />
+            </button>
+          </div>
           <button className="p-2 rounded-xl bg-transparent hover:bg-slate-100 dark:hover:bg-neutral-800 text-neutral-500 transition-all">
             <RotateCcw className="w-5 h-5" />
           </button>

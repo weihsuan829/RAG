@@ -43,7 +43,7 @@
 ## 前端
 
 - `api.ts`：`streamChat` 加第四參數 `mode`（預設 `'kb'`）；`Citation` 型別加選填 `url`
-- `ChatWindow`：每則 assistant 訊息下方顯示「🌐 用網路搜尋補充」按鈕；點擊後以該則回答對應的**原始使用者問題**、`mode:'web'` 重發（新的一組 user/assistant 訊息附加在同一對話）
+- `ChatWindow`：每則 assistant 訊息下方顯示「🌐 用網路搜尋補充」按鈕；點擊後以該則回答對應的**原始使用者問題**、`mode:'web'` 重發（僅附加 amber 樣式的 assistant 回覆，不重複顯示使用者問題氣泡——與實作一致，2026-07-10 修正本行原先的錯誤描述）
 - 網路回答樣式：不同底色＋「網路資訊，僅供參考」標籤；citations 有 `url` 時渲染為外開連結
 - 判斷依據：訊息的 `source` 欄位（`GET /threads/{id}` 的 MessageOut 同步加 `source`）
 
@@ -62,5 +62,17 @@
 ## 不在本次範圍
 
 - 每人／每日用量限額
-- 自動偵測「查無資料」
 - 網路結果寫回知識庫
+
+## 修訂 2026-07-10：自動網路搜尋開關
+
+推翻上方「不在本次範圍」原列的「自動偵測『查無資料』」決定──使用者要求新增此功能，故實作如下：
+
+- **UI**：`ChatWindow` 標題列（RotateCcw 圖示旁）新增小型開關＋12px 標籤「查無資料時自動網路搜尋」
+- **狀態**：`autoWebFallback: boolean`，預設 `false`，以 `localStorage`（key `auto_web_fallback`，值 `'1'`/`'0'`）per-browser 記憶，lazy `useState` 初始化
+- **門檻**：`AUTO_WEB_THRESHOLD = 0.45`（模組層級常數）；實測直接命中相似度≈0.80、弱相關≈0.57，故取 0.45 作為「查無資料」分界
+- **觸發條件**：僅 KB 模式；`onDone` 成功後評估「開關為開 &&（citations 為空 或 最高 similarity < 0.45）」，符合則自動以相同問題文字（來自送出當下的 closure，非索引查找）呼叫共用 `sendMessage(...)` 走 `mode:'web'`
+- **視覺一致性**：自動觸發沿用與手動「🌐 用網路搜尋補充」按鈕完全相同的行為──不新增 user 氣泡、amber 底色＋「網路資訊，僅供參考」標籤
+- **新對話情境**：`sendMessage` 新增選填參數 `threadIdOverride`；自動觸發時直接帶入 `onDone` 回傳的 `thread_id`，不依賴當下可能尚未更新的 `activeThreadId` prop，避免新對話重複建立
+- **防重複**：每個問題最多觸發一次（closure 內旗標），`mode:'web'` 的送出本身不會再評估自動觸發（避免遞迴），錯誤路徑（`onError`）不觸發
+- **零後端改動**：純前端邏輯，沿用既有 `streamChat(mode:'web')` 端點
