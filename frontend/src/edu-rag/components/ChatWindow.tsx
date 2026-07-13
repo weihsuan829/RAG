@@ -89,6 +89,9 @@ const TypewriterText: React.FC<{ content: string; active: boolean }> = ({ conten
 // 自動網路搜尋門檻：KB 回覆最高相似度低於此值（或完全沒有出處）視為「查無資料」，
 // 觸發自動網路搜尋補充。實測：直接命中≈0.80、弱相關≈0.57，故取 0.45 作為分界。
 const AUTO_WEB_THRESHOLD = 0.45;
+// AI 回答中自承查無資料的字樣——檢索相似度高但答非所問時（如主題相近的議案很多），
+// 門檻判不出「查無」，以模型自己的宣告為準。
+const NOT_FOUND_PATTERN = /找不到|無法找到|沒有找到|查無相關|沒有相關/;
 
 const AUTO_WEB_FALLBACK_STORAGE_KEY = 'auto_web_fallback';
 
@@ -288,7 +291,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         if (mode === 'kb' && !autoWebFired) {
           const similarities = (latestCitations ?? []).map((c) => c.similarity);
           const maxSimilarity = similarities.length > 0 ? Math.max(...similarities) : -Infinity;
-          const noResult = similarities.length === 0 || maxSimilarity < AUTO_WEB_THRESHOLD;
+          const noResult = similarities.length === 0 || maxSimilarity < AUTO_WEB_THRESHOLD || NOT_FOUND_PATTERN.test(lastText);
 
           if (autoWebFallbackAtSend && noResult) {
             autoWebFired = true;
@@ -418,7 +421,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 const isWebSource = isAssistant && message.source === 'web';
                 const isErrorMessage = message.content.startsWith('⚠️ 系統暫時無法取得資料');
                 // 顯示「用網路搜尋補充」按鈕的條件：assistant 訊息、非串流中（isThinking）、非錯誤文案。
-                const showWebFallback = isAssistant && !message.isThinking && !isErrorMessage;
+                // 「用網路搜尋補充」按鈕僅在「這一題查無資料」時出現（沿用自動搜尋的同一門檻），
+                // 且自動搜尋開關開啟時不顯示（自動路徑已涵蓋，避免重複入口）；web 回覆本身不再提供。
+                const msgMaxSimilarity = message.citations?.length
+                  ? Math.max(...message.citations.map((c) => c.similarity))
+                  : -Infinity;
+                const msgNoResult = !message.citations || message.citations.length === 0 || msgMaxSimilarity < AUTO_WEB_THRESHOLD || NOT_FOUND_PATTERN.test(message.content);
+                const showWebFallback =
+                  isAssistant && !message.isThinking && !isErrorMessage &&
+                  message.source !== 'web' && msgNoResult && !autoWebFallback;
                 const citationKey = message.id || String(index);
                 const citationsExpanded = expandedCitations.has(citationKey);
 
