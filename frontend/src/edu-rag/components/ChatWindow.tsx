@@ -195,6 +195,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     // 保證同一個問題最多只自動觸發一次網路搜尋（防禦性：即使 onDone 意外多次觸發）。
     let autoWebFired = false;
 
+    // 累積已收到的答案文字：onCitations（web 模式在文字之後才到）與 onDone 的整包更新
+    // 都必須帶上它，否則會把畫面上已顯示的答案清成空白（handleUpdateMessage 是整物件取代）。
+    let lastText = "";
+
     await streamChat(messageText, threadIdAtSend, {
       onCitations: (citations: ApiCitation[]) => {
         latestCitations = citations.map((c, i) => ({
@@ -204,13 +208,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           similarity: c.similarity,
           url: c.url,
         }));
-        onUpdateMessage?.({ ...assistantMessage, content: "", citations: latestCitations, source: mode });
+        onUpdateMessage?.({ ...assistantMessage, content: lastText, citations: latestCitations, source: mode });
       },
       onUpdate: (fullText) => {
-        onUpdateMessage?.({ ...assistantMessage, content: fullText, citations: latestCitations, source: mode });
+        lastText = fullText;
+        onUpdateMessage?.({ ...assistantMessage, content: lastText, citations: latestCitations, source: mode });
       },
       onDone: ({ thread_id, source }) => {
-        onUpdateMessage?.({ ...assistantMessage, isThinking: false, citations: latestCitations, source });
+        onUpdateMessage?.({ ...assistantMessage, content: lastText, isThinking: false, citations: latestCitations, source });
         if (!threadIdAtSend) {
           // 全新對話：一定要告知父層新建的 thread_id，讓左側列表出現這筆對話（會切換過去）。
           onThreadCreated(thread_id);
