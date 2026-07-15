@@ -97,21 +97,26 @@ const EduRagDocsPage = () => {
             .filter(doc => doc.name.toLowerCase().includes(query.toLowerCase()));
     }, [docs, query]);
 
-    // 有任一檔在「索引中」時輪詢刷新，全部就緒即停（上限約 5 分鐘）。
+    // 只依伺服器文件的「索引中」狀態決定是否輪詢（本地上傳紀錄不驅動輪詢，避免永不停止）。
+    const anyServerIndexing = useMemo(
+        () => completedDocs.some((d) => (d as ServerDoc).isServer && (d as ServerDoc).indexStatus === 'indexing'),
+        [completedDocs],
+    );
+
+    // 有伺服器文件在「索引中」時每 8 秒刷新，全部就緒即停（上限約 5 分鐘）。
     useEffect(() => {
-        const anyIndexing = completedDocs.some((d) => rowStatus(d) === 'indexing');
-        if (!anyIndexing) return;
+        if (!anyServerIndexing) return;
         let ticks = 0;
         const timer = setInterval(() => {
             ticks += 1;
-            if (ticks > 38) {  // 38 × 8s ≈ 5 分鐘
+            if (ticks > 38) {
                 clearInterval(timer);
                 return;
             }
             void refreshDocs();
         }, 8000);
         return () => clearInterval(timer);
-    }, [completedDocs]);
+    }, [anyServerIndexing]);
 
     // 共用預覽開啟邏輯：建立 object URL 並設定預覽狀態（本地上傳與伺服器已索引文件共用）。
     const openBlobPreview = (name: string, type: string, blob: Blob) => {
