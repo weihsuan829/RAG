@@ -329,6 +329,17 @@ git commit -m "feat: 內容為空判定與 checksum 快取表"
   - `GET /api/v1/documents` 每筆多帶 `index_status`
   - `POST /api/v1/documents/sync` → `{"job_id": str}`
 
+- [ ] **Step 0: 先讓既有 /documents 測試不打真網路**
+
+在 `backend/tests/test_uploads.py` 的 autouse `fake_s3` fixture（第 4-31 行）末尾、`monkeypatch.setattr(uploads, "s3_client", _FakeS3())` 之後，加上對 cloudflare 的預設 stub（避免既有 `test_list_documents` 等未 patch 的測試對真 Cloudflare 發 30 秒 timeout 請求）：
+
+```python
+    monkeypatch.setattr(uploads.cloudflare, "list_item_status", lambda: {}, raising=False)
+    monkeypatch.setattr(uploads.cloudflare, "retrieve_text", lambda q, k: "", raising=False)
+```
+
+（`raising=False` 讓此步在 Task 2 尚未落地時也不會炸；Task 2 完成後屬性已存在。）
+
 - [ ] **Step 1: 寫失敗測試**
 
 在 `backend/tests/test_uploads.py` 末尾新增：
