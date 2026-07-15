@@ -1,7 +1,7 @@
 ﻿import { useRef, useState } from 'react';
 import { Upload, FileType, CheckCircle2 } from 'lucide-react';
 import { saveUpload, updateUpload, type UploadRecord, type UploadStatus } from '../utils/uploadStore';
-import { requestUploadUrl, uploadToR2 } from '../services/api';
+import { requestUploadUrl, uploadToR2, triggerSync } from '../services/api';
 
 // 前端白名單：五種允許的 MIME 類型（PDF、Word、Excel、純文字、Markdown）。
 const ALLOWED = new Set([
@@ -76,11 +76,21 @@ const EduRagUploadPage = () => {
             file
         }));
 
-        newItems.forEach(async ({ record, file }) => {
-            await saveUpload(record);
-            setUploads((prev) => [record, ...prev]);
-            void processFile(file, record.id);
-        });
+        void (async () => {
+            await Promise.all(
+                newItems.map(async ({ record, file }) => {
+                    await saveUpload(record);
+                    setUploads((prev) => [record, ...prev]);
+                    await processFile(file, record.id);
+                }),
+            );
+            // 只要有任一檔成功上傳，就觸發一次索引同步（失敗不影響上傳結果）。
+            try {
+                await triggerSync();
+            } catch {
+                // 同步觸發失敗時，Cloudflare 排程仍會自動處理，靜默即可。
+            }
+        })();
 
         event.target.value = '';
     };
