@@ -155,8 +155,13 @@ export async function uploadToR2(
     if (!put.ok) throw new Error(`上傳失敗（HTTP ${put.status}）`);
 }
 
+export type IndexStatus = 'indexing' | 'ready' | 'empty' | 'failed';
+
 export const listDocuments = () =>
-    request<{ name: string; size_bytes: number; updated_at: string; display_name: string }[]>('/api/v1/documents');
+    request<{ name: string; size_bytes: number; updated_at: string; display_name: string; index_status: IndexStatus }[]>('/api/v1/documents');
+
+export const triggerSync = () =>
+    request<{ job_id: string }>('/api/v1/documents/sync', { method: 'POST' });
 
 export const requestDownloadUrl = (key: string) =>
     request<{ download_url: string; expires_in: number }>(
