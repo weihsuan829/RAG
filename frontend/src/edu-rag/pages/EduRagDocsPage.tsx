@@ -3,7 +3,7 @@ import { Search, Filter, RefreshCw, Trash2, Download, Maximize2, Minimize2 } fro
 import { renderAsync } from 'docx-preview';
 import * as XLSX from 'xlsx';
 import { deleteUpload, getUpload, listUploads, type UploadRecord } from '../utils/uploadStore';
-import { listDocuments, requestDownloadUrl } from '../services/api';
+import { listDocuments, requestDownloadUrl, type IndexStatus } from '../services/api';
 import { Link } from 'react-router-dom';
 
 // 伺服器端已索引文件的顯示型別（key 為儲存用名稱，name 為顯示用真名，無本地 blob 可預覽）。
@@ -15,6 +15,7 @@ type ServerDoc = {
     updatedAt: number;
     sizeLabel: string;
     isServer: true;
+    indexStatus: IndexStatus;
 };
 
 // 文件管理頁：列表、搜尋、預覽、下載與刪除。
@@ -65,6 +66,7 @@ const EduRagDocsPage = () => {
                     updatedAt: new Date(d.updated_at).getTime(),
                     sizeLabel: `${(d.size_bytes / 1024).toFixed(0)} KB`,
                     isServer: true as const,
+                    indexStatus: d.index_status,
                 };
             });
         } catch {
@@ -94,6 +96,22 @@ const EduRagDocsPage = () => {
             .filter(doc => (doc as UploadRecord).status === 'completed' || (doc as ServerDoc).isServer)
             .filter(doc => doc.name.toLowerCase().includes(query.toLowerCase()));
     }, [docs, query]);
+
+    // 有任一檔在「索引中」時輪詢刷新，全部就緒即停（上限約 5 分鐘）。
+    useEffect(() => {
+        const anyIndexing = completedDocs.some((d) => rowStatus(d) === 'indexing');
+        if (!anyIndexing) return;
+        let ticks = 0;
+        const timer = setInterval(() => {
+            ticks += 1;
+            if (ticks > 38) {  // 38 × 8s ≈ 5 分鐘
+                clearInterval(timer);
+                return;
+            }
+            void refreshDocs();
+        }, 8000);
+        return () => clearInterval(timer);
+    }, [completedDocs]);
 
     // 共用預覽開啟邏輯：建立 object URL 並設定預覽狀態（本地上傳與伺服器已索引文件共用）。
     const openBlobPreview = (name: string, type: string, blob: Blob) => {
@@ -265,6 +283,24 @@ const EduRagDocsPage = () => {
         return type || 'file';
     };
 
+    // 逐列索引狀態：伺服器文件用其 index_status；本地剛上傳紀錄視為索引中。
+    const rowStatus = (doc: UploadRecord | ServerDoc): IndexStatus =>
+        (doc as ServerDoc).isServer ? (doc as ServerDoc).indexStatus : 'indexing';
+
+    // 狀態文字＋顏色（純文字，無 icon）。
+    const statusBadge = (s: IndexStatus): { label: string; className: string } => {
+        switch (s) {
+            case 'ready':
+                return { label: '可查詢', className: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' };
+            case 'empty':
+                return { label: '無可讀內容', className: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400' };
+            case 'failed':
+                return { label: '索引失敗', className: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' };
+            default:
+                return { label: '索引中', className: 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400' };
+        }
+    };
+
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
@@ -354,9 +390,14 @@ const EduRagDocsPage = () => {
                                         {sizeLabel}
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
-                                            已索引
-                                        </span>
+                                        {(() => {
+                                            const b = statusBadge(rowStatus(doc));
+                                            return (
+                                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${b.className}`}>
+                                                    {b.label}
+                                                </span>
+                                            );
+                                        })()}
                                     </td>
                                     <td className="px-6 py-4 text-slate-600 dark:text-neutral-400">
                                         {new Date(doc.updatedAt).toLocaleDateString('zh-TW')}
