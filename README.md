@@ -11,6 +11,8 @@ React 前端 ──► FastAPI 後端（登入/聊天記錄/上傳） ──► 
 
 檢索與生成由 Cloudflare AI Search 全自動處理（實例：`edu-bills-search`，綁定 R2 bucket `ntpc-edu-bills`）。後端負責身分驗證、聊天記錄（各使用者隔離）、上傳簽名網址。詳見 [docs/architecture.md](docs/architecture.md) 與 [docs/superpowers/specs/](docs/superpowers/specs/)。
 
+> **從零建置 Cloudflare（換帳號／交接必看）**：R2 bucket、兩組權杖、AI Search 實例的完整可複製步驟見 [docs/cloudflare-setup.md](docs/cloudflare-setup.md)，含 `bucket unauthorized` 索引失敗的排解。
+
 ## 目錄結構
 
 | 路徑 | 內容 |
