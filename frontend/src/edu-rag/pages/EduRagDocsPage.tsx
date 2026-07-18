@@ -72,7 +72,10 @@ const EduRagDocsPage = () => {
         } catch {
             serverDocs = [];
         }
-        setDocs([...items, ...serverDocs]);
+        // 本機紀錄與伺服器文件去重：若本機紀錄中已有同名的伺服器文件，不重複顯示（狀態以伺服器為準）。
+        const serverNames = new Set(serverDocs.map((d) => d.name));
+        const localOnly = items.filter((it) => !serverNames.has(it.name));
+        setDocs([...localOnly, ...serverDocs]);
     };
 
     // 初次載入與視窗回焦時刷新，避免跨頁操作後資料過期。

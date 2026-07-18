@@ -84,12 +84,17 @@ const EduRagUploadPage = () => {
                     await processFile(file, record.id);
                 }),
             );
-            // 只要有任一檔成功上傳，就觸發一次索引同步（失敗不影響上傳結果）。
-            try {
-                await triggerSync();
-            } catch {
-                // 同步觸發失敗時，Cloudflare 排程仍會自動處理，靜默即可。
-            }
+            // 只要有任一檔成功上傳，就觸發索引同步（失敗不影響上傳結果）。
+            // 立即觸發一次，再於 30 秒後補觸發，避開 R2 清單一致性延遲。
+            const fireSync = async () => {
+                try {
+                    await triggerSync();
+                } catch {
+                    // 同步觸發失敗時，Cloudflare 排程仍會自動處理，靜默即可。
+                }
+            };
+            void fireSync();                               // 立即觸發
+            setTimeout(() => { void fireSync(); }, 30000); // 30 秒後補觸發
         })();
 
         event.target.value = '';
