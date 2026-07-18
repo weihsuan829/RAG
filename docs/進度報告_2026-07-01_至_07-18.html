@@ -1,0 +1,703 @@
+<title>教育局議案 RAG 系統 — 7/1–7/18 進度報告</title>
+<style>
+  :root {
+    --bg: #f7f8f8;
+    --panel: #ffffff;
+    --panel-2: #eff2f2;
+    --ink: #16201f;
+    --ink-soft: #4a5654;
+    --ink-faint: #7c8785;
+    --border: #e0e6e5;
+    --border-strong: #cdd6d5;
+    --accent: #1f6f78;
+    --accent-ink: #175a62;
+    --accent-wash: #e6f0f0;
+    --ok: #2c7a52;
+    --ok-bg: #e8f3ec;
+    --warn: #96601a;
+    --warn-bg: #fbf1e0;
+    --crit: #a63a32;
+    --crit-bg: #faebe9;
+    --shadow:
+      0 1px 2px rgba(20, 35, 33, 0.05), 0 10px 26px -14px rgba(20, 35, 33, 0.18);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101514;
+      --panel: #18201f;
+      --panel-2: #1e2726;
+      --ink: #e7edec;
+      --ink-soft: #a7b3b1;
+      --ink-faint: #788583;
+      --border: #26302f;
+      --border-strong: #33403e;
+      --accent: #4fb3b8;
+      --accent-ink: #4fb3b8;
+      --accent-wash: #15302f;
+      --ok: #6fbf8e;
+      --ok-bg: #152318;
+      --warn: #d9a45c;
+      --warn-bg: #2a2013;
+      --crit: #e28880;
+      --crit-bg: #2a1614;
+      --shadow:
+        0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 30px -16px rgba(0, 0, 0, 0.7);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f7f8f8;
+    --panel: #ffffff;
+    --panel-2: #eff2f2;
+    --ink: #16201f;
+    --ink-soft: #4a5654;
+    --ink-faint: #7c8785;
+    --border: #e0e6e5;
+    --border-strong: #cdd6d5;
+    --accent: #1f6f78;
+    --accent-ink: #175a62;
+    --accent-wash: #e6f0f0;
+    --ok: #2c7a52;
+    --ok-bg: #e8f3ec;
+    --warn: #96601a;
+    --warn-bg: #fbf1e0;
+    --crit: #a63a32;
+    --crit-bg: #faebe9;
+    --shadow:
+      0 1px 2px rgba(20, 35, 33, 0.05), 0 10px 26px -14px rgba(20, 35, 33, 0.18);
+  }
+  :root[data-theme="dark"] {
+    --bg: #101514;
+    --panel: #18201f;
+    --panel-2: #1e2726;
+    --ink: #e7edec;
+    --ink-soft: #a7b3b1;
+    --ink-faint: #788583;
+    --border: #26302f;
+    --border-strong: #33403e;
+    --accent: #4fb3b8;
+    --accent-ink: #4fb3b8;
+    --accent-wash: #15302f;
+    --ok: #6fbf8e;
+    --ok-bg: #152318;
+    --warn: #d9a45c;
+    --warn-bg: #2a2013;
+    --crit: #e28880;
+    --crit-bg: #2a1614;
+    --shadow:
+      0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 30px -16px rgba(0, 0, 0, 0.7);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family:
+      "PingFang TC",
+      "Noto Sans TC",
+      "Microsoft JhengHei",
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.86em;
+    background: var(--panel-2);
+    padding: 0.1em 0.4em;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+  }
+  .wrap {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(10px) saturate(1.3);
+    border-bottom: 1px solid var(--border);
+  }
+  .bar-in {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand {
+    font-weight: 680;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex: none;
+  }
+  .push {
+    margin-left: auto;
+  }
+  .tbtn {
+    appearance: none;
+    border: 1px solid var(--border-strong);
+    background: var(--panel);
+    color: var(--ink-soft);
+    font: inherit;
+    font-size: 13px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .tbtn:hover {
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  .tbtn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  header.hero {
+    padding: 56px 0 28px;
+  }
+  .eyebrow {
+    font-size: 12.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    font-weight: 660;
+    margin: 0 0 16px;
+  }
+  h1 {
+    font-size: clamp(28px, 4.8vw, 42px);
+    line-height: 1.15;
+    margin: 0 0 14px;
+    font-weight: 750;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+  .lede {
+    font-size: 17.5px;
+    color: var(--ink-soft);
+    margin: 0;
+    max-width: 62ch;
+  }
+  .status-line {
+    margin-top: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: var(--ok-bg);
+    color: var(--ok);
+    font-size: 13.5px;
+    font-weight: 640;
+    border: 1px solid color-mix(in srgb, var(--ok) 28%, transparent);
+  }
+
+  /* metrics */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 30px 0 8px;
+  }
+  .metric {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .metric .n {
+    font-size: 30px;
+    font-weight: 740;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+    color: var(--accent-ink);
+  }
+  .metric .l {
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    margin-top: 5px;
+  }
+  @media (max-width: 720px) {
+    .metrics {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  section {
+    padding: 34px 0;
+    border-top: 1px solid var(--border);
+  }
+  h2 {
+    font-size: 22px;
+    margin: 0 0 6px;
+    font-weight: 720;
+    letter-spacing: -0.01em;
+  }
+  .sec-note {
+    color: var(--ink-faint);
+    font-size: 14px;
+    margin: 0 0 22px;
+  }
+
+  /* timeline */
+  .tl {
+    position: relative;
+    padding-left: 30px;
+  }
+  .tl::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    background: linear-gradient(var(--border-strong), var(--border));
+  }
+  .ph {
+    position: relative;
+    padding: 0 0 26px;
+  }
+  .ph::before {
+    content: "";
+    position: absolute;
+    left: -26px;
+    top: 7px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--panel);
+    border: 2px solid var(--accent);
+  }
+  .ph.crit::before {
+    border-color: var(--crit);
+  }
+  .ph .when {
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    color: var(--accent-ink);
+    font-weight: 640;
+    letter-spacing: 0.04em;
+  }
+  .ph.crit .when {
+    color: var(--crit);
+  }
+  .ph h3 {
+    margin: 3px 0 8px;
+    font-size: 17.5px;
+    font-weight: 680;
+  }
+  .ph ul {
+    margin: 0;
+    padding-left: 19px;
+    color: var(--ink-soft);
+    font-size: 14.5px;
+  }
+  .ph li {
+    margin: 3px 0;
+  }
+  .ph li b {
+    color: var(--ink);
+    font-weight: 640;
+  }
+
+  /* feature cards */
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 720px) {
+    .cards {
+      grid-template-columns: 1fr;
+    }
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+  }
+  .card h4 {
+    margin: 0 0 4px;
+    font-size: 15.5px;
+    font-weight: 700;
+  }
+  .card .why {
+    font-size: 13px;
+    color: var(--accent-ink);
+    font-weight: 600;
+    margin: 0 0 10px;
+  }
+  .card p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .card .ba {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 12.5px;
+  }
+  .pill {
+    padding: 3px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+  .pill.good {
+    background: var(--ok-bg);
+    color: var(--ok);
+    border-color: color-mix(in srgb, var(--ok) 28%, transparent);
+    font-weight: 640;
+  }
+  .arrow {
+    color: var(--ink-faint);
+  }
+
+  .callout {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px 17px;
+    background: var(--panel);
+    font-size: 14.5px;
+    margin: 0 0 12px;
+  }
+  .callout.crit {
+    border-left-color: var(--crit);
+    background: var(--crit-bg);
+    border-color: color-mix(in srgb, var(--crit) 26%, transparent);
+  }
+  .callout.warn {
+    border-left-color: var(--warn);
+    background: var(--warn-bg);
+    border-color: color-mix(in srgb, var(--warn) 26%, transparent);
+  }
+  .callout b {
+    font-weight: 680;
+  }
+  .callout p {
+    margin: 0;
+  }
+  .callout p + p {
+    margin-top: 7px;
+  }
+
+  ul.next {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--ink-soft);
+    font-size: 15px;
+  }
+  ul.next li {
+    margin: 7px 0;
+  }
+  ul.next b {
+    color: var(--ink);
+  }
+
+  footer {
+    padding: 34px 0 64px;
+    color: var(--ink-faint);
+    font-size: 12.5px;
+    border-top: 1px solid var(--border);
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--accent) 26%, transparent);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+    }
+  }
+</style>
+
+<div class="bar">
+  <div class="bar-in">
+    <span class="brand"><span class="dot"></span>教育局議案 RAG 系統</span>
+    <span class="push"></span>
+    <button class="tbtn" id="tb">主題</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="hero">
+    <p class="eyebrow">進度報告 · 2026/07/01 – 07/18</p>
+    <h1>新北市教育局議案 RAG 系統<br />開發進度與功能優化</h1>
+    <p class="lede">
+      從接手有寬給的的教育局資料，到自建cloudflare
+      雲端資料庫、完成前後端整合、擴充功能、修復重大故障。
+    </p>
+    <div class="status-line">● 目前狀態：正式環境已上線並驗證通過</div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="n">303</div>
+        <div class="l">議會教育類議案已索引</div>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <h2>開發時間軸</h2>
+    <p class="sec-note">依實際進度分為六個階段</p>
+    <div class="tl">
+      <div class="ph">
+        <div class="when">07/08 – 07/09</div>
+        <h3>① 接手與雲端自主化</h3>
+        <ul>
+          <li>接手前有寬給的教育局資料</li>
+          <li>
+            <b>建立自己的 Cloudflare 帳號</b>：建立R2 物件儲存空間、AI Search
+            向量索引等服務
+          </li>
+          <li>
+            303 筆議案資料：JSON → Markdown 轉檔 → 上傳Cloudflare → 建立向量索引
+          </li>
+        </ul>
+      </div>
+
+      <div class="ph">
+        <div class="when">07/09</div>
+        <h3>② 前後端整合）</h3>
+        <ul>
+          <li>
+            <b>真實登入機制</b>：帳號密碼驗證、JWT
+            權杖、路由守衛（未登入無法進入系統）
+          </li>
+          <li><b>聊天接上後端</b>：串流回覆、自動附上資料來源出處</li>
+          <li><b>對話記錄入庫</b>：存於後端資料庫，各使用者資料互相隔離</li>
+          <li><b>文件上傳與清單</b>：瀏覽器直傳雲端儲存，文件管理頁可檢視</li>
+        </ul>
+      </div>
+
+      <div class="ph">
+        <div class="when">07/10 – 07/13</div>
+        <h3>③ 功能擴充與使用體驗優化</h3>
+        <ul>
+          <li>
+            <b>網路搜尋備援</b
+            >：資料庫查無資料時，可改用網路搜尋回答（含自動／手動開關，回答明確標示為網路資訊）
+          </li>
+          <li><b>中文檔名保留</b>與檔案下載功能</li>
+          <li><b>開發／正式雙環境</b>建置（Docker 容器化）</li>
+          <li>
+            介面優化：逐字打字機回覆、參考來源收合展開、點擊檔名即可預覽、聊天版面加高
+          </li>
+        </ul>
+      </div>
+
+      <div class="ph crit">
+        <div class="when">07/14 – 07/15</div>
+        <h3>④ 重大故障排除</h3>
+        <ul>
+          <li>
+            <b>症狀</b>：新上傳文件無法被索引，後台顯示 304 個檔案索引全數失敗
+          </li>
+          <li>
+            <b>根因</b>：AI Search
+            讀取雲端儲存的授權權杖失效（與程式使用的權杖是不同的兩組，容易誤刪）
+          </li>
+          <li>
+            <b>處置</b>：重建索引服務實例並重新授權，索引恢復正常（306 成功 / 0
+            錯誤）
+          </li>
+          <li><b>預防</b>：撰寫完整雲端建置交接文件，記錄易踩陷阱與解法</li>
+        </ul>
+      </div>
+
+      <div class="ph">
+        <div class="when">07/15 – 07/18</div>
+        <h3>⑤ 索引狀態可視化與自動同步</h3>
+        <ul>
+          <li>
+            <b>解決的問題</b
+            >：上傳文件後，無法得知何時能開始查詢，需登入雲端後台才看得到
+          </li>
+          <li>
+            文件列表新增<b>索引狀態</b>：索引中／可查詢／無可讀內容／索引失敗，自動更新無需手動重整
+          </li>
+          <li>
+            上傳完成後<b>自動觸發索引</b>，不必等待系統排程（原需最長 6 小時）
+          </li>
+          <li>
+            <b>無可讀內容偵測</b>：掃描檔或無文字層的 PDF
+            會明確標示，避免使用者誤以為系統故障
+          </li>
+        </ul>
+      </div>
+
+      <div class="ph">
+        <div class="when">07/18</div>
+        <h3>⑥ 效能優化</h3>
+        <ul>
+          <li>文件頁載入效能優化：<b>4.6 秒 → 0.39 秒</b></li>
+          <li>清除全部測試資料，正式環境僅保留 303 筆真實議案</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>功能優化說明</h2>
+    <p class="sec-note">每項優化對應的實際問題與成效</p>
+    <div class="cards">
+      <div class="card">
+        <h4>索引狀態可視化</h4>
+        <p class="why">問題：使用者不知道文件何時可以查詢</p>
+        <p>
+          文件列表直接顯示每份檔案的索引狀態並自動更新，同仁不需要登入雲端後台，也不必反覆重整頁面。
+        </p>
+        <div class="ba">
+          <span class="pill">需登入後台查看</span><span class="arrow">→</span
+          ><span class="pill good">系統內自動顯示</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>上傳後自動索引</h4>
+        <p class="why">問題：上傳後要等系統排程，最長 6 小時</p>
+        <p>
+          上傳完成即自動觸發索引，並於 30
+          秒後補觸發一次以避開雲端儲存的資料同步延遲，確保不會漏檔。
+        </p>
+        <div class="ba">
+          <span class="pill">最長 6 小時</span><span class="arrow">→</span
+          ><span class="pill good">約 1–2 分鐘</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>無可讀內容偵測</h4>
+        <p class="why">問題：掃描檔看似上傳成功卻查不到內容</p>
+        <p>
+          系統會判斷檔案是否真的抽得到文字，掃描檔或圖片型 PDF
+          會明確標示「無可讀內容」，提示使用者改上傳可讀取的版本。
+        </p>
+        <div class="ba">
+          <span class="pill">誤以為系統故障</span><span class="arrow">→</span
+          ><span class="pill good">明確告知原因</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>文件頁載入效能</h4>
+        <p class="why">問題：每次進入文件管理頁都要等待</p>
+        <p>
+          將「文件清單」與「索引狀態」拆為兩段載入：清單先秒顯示，狀態於背景補上；並加入短期快取減少重複查詢。
+        </p>
+        <div class="ba">
+          <span class="pill">4.6 秒</span><span class="arrow">→</span
+          ><span class="pill good">0.39 秒</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>網路搜尋備援</h4>
+        <p class="why">問題：議案資料庫查無資料時無法回答</p>
+        <p>
+          查無資料時可改用網路搜尋補充，回答會以不同樣式標示為「網路資訊，僅供參考」並附上來源連結，與官方議案資料明確區分。
+        </p>
+        <div class="ba">
+          <span class="pill">回答不出來</span><span class="arrow">→</span
+          ><span class="pill good">有標示的備援解答</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>聊天使用體驗</h4>
+        <p class="why">問題：等待期間畫面靜止、版面擁擠</p>
+        <p>
+          回覆改為逐字顯示降低等待感；參考來源改為收合展開，不佔版面；點擊檔名即可預覽內容；聊天區域加高約
+          120px。
+        </p>
+        <div class="ba">
+          <span class="pill">一次跳出／版面壓縮</span
+          ><span class="arrow">→</span
+          ><span class="pill good">逐字回覆／版面清爽</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>下一步規劃</h2>
+    <p class="sec-note">依教授建議與系統現況</p>
+    <ul class="next">
+      <li>
+        <b>對話紀錄應用於研究</b
+        >：帳號與對話記錄機制已完成，後續補上匯出功能、檢索命中紀錄與使用者滿意度回饋，作為研究分析資料（需留意受測者同意與去識別化）。
+      </li>
+      <li>
+        <b>提示詞優化</b
+        >：可先啟用向量檢索的「查詢改寫」與「重新排序」功能（目前關閉），成本低且可作為開關對照實驗；使用者端的提示語範本輔助則視論文主軸再評估。
+      </li>
+      <li>
+        <b>環境隔離</b
+        >：開發環境與正式環境目前共用同一份雲端資料，規劃分離以避免測試資料影響正式系統。
+      </li>
+      <li>
+        <b>正式帳號建立</b
+        >：正式環境目前僅有測試帳號，開放同仁使用前需建立正式帳號並停用測試帳號。
+      </li>
+    </ul>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap">
+    新北市教育局議案 RAG 系統 · 進度報告 2026/07/01–07/18 ·
+    資料來源：專案版本控制紀錄
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var r = document.documentElement,
+      b = document.getElementById("tb");
+    function sysDark() {
+      return matchMedia && matchMedia("(prefers-color-scheme:dark)").matches;
+    }
+    function cur() {
+      var t = r.getAttribute("data-theme");
+      return t ? t : sysDark() ? "dark" : "light";
+    }
+    function ap(t) {
+      r.setAttribute("data-theme", t);
+      b.textContent = t === "dark" ? "深色" : "淺色";
+    }
+    ap(cur());
+    b.addEventListener("click", function () {
+      ap(cur() === "dark" ? "light" : "dark");
+    });
+  })();
+</script>

@@ -87,3 +87,25 @@ cd backend && uv run python ../scripts/upload_to_r2.py   # 上傳 R2，AI Search
 - token 由 localStorage 改 httpOnly cookie；登入加 dummy-hash 時序防護
 - SQLite 換 PostgreSQL（改 `DATABASE_URL` 即可，程式碼無 SQLite 相依）
 - CORS 白名單改為正式網域（`backend/.env` 的 `CORS_ORIGINS`）
+
+## 進度報告（每期產出）
+
+固定格式的階段性進度報告，供會議簡報與交接留存。
+
+```bash
+# 1) 取得該期開發素材（兩個 repo 的提交、統計、測試數）
+./scripts/report-data.sh 2026-07-19 2026-07-31
+
+# 2) 複製模板另存新檔，把所有「【...】」佔位文字換掉
+cp docs/report-template.html "docs/進度報告_2026-07-19_至_07-31.html"
+
+# 3) 轉成 PDF（會議發送用）
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --disable-gpu \
+  --no-pdf-header-footer \
+  --print-to-pdf="docs/進度報告_2026-07-19_至_07-31.pdf" \
+  "file://$PWD/docs/進度報告_2026-07-19_至_07-31.html"
+```
+
+模板結構：開場摘要 → 開發時間軸（階段可增減，加 `crit` class 標示故障排除）→ 功能優化說明（卡片，含改善前後對比）→ 下一步規劃。深淺色主題自動切換，適合投影。
+
+範例：[docs/進度報告_2026-07-01_至_07-18.html](docs/進度報告_2026-07-01_至_07-18.html)
