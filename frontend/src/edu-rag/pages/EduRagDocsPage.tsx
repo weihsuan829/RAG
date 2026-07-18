@@ -3,7 +3,7 @@ import { Search, Filter, RefreshCw, Trash2, Download, Maximize2, Minimize2 } fro
 import { renderAsync } from 'docx-preview';
 import * as XLSX from 'xlsx';
 import { deleteUpload, getUpload, listUploads, type UploadRecord } from '../utils/uploadStore';
-import { listDocuments, requestDownloadUrl, type IndexStatus } from '../services/api';
+import { listDocuments, requestDownloadUrl, fetchDocumentStatus, type IndexStatus } from '../services/api';
 import { Link } from 'react-router-dom';
 
 // 伺服器端已索引文件的顯示型別（key 為儲存用名稱，name 為顯示用真名，無本地 blob 可預覽）。
@@ -15,7 +15,7 @@ type ServerDoc = {
     updatedAt: number;
     sizeLabel: string;
     isServer: true;
-    indexStatus: IndexStatus;
+    indexStatus: IndexStatus | null;
 };
 
 // 文件管理頁：列表、搜尋、預覽、下載與刪除。
@@ -51,31 +51,43 @@ const EduRagDocsPage = () => {
         return 'text/plain';
     };
 
-    // 重新讀取文件資料：本地上傳紀錄（可預覽/刪除） + 伺服器已索引文件（唯讀清單）。
+    // 載入伺服器狀態並合併進現有列（不重抓清單，供輪詢輕量更新）。
+    const loadStatuses = async () => {
+        try {
+            const statusMap = await fetchDocumentStatus();
+            setDocs((prev) => prev.map((d) =>
+                (d as ServerDoc).isServer
+                    ? { ...d, indexStatus: statusMap[(d as ServerDoc).key] ?? 'indexing' }
+                    : d,
+            ));
+        } catch {
+            // 狀態載入失敗，保持「檢查中」，下次輪詢/重整再試。
+        }
+    };
+
+    // 重新讀取：先顯示清單（狀態為檢查中），再背景補狀態。
     const refreshDocs = async () => {
         const items = await listUploads();
         let serverDocs: ServerDoc[] = [];
         try {
             const remote = await listDocuments();
-            serverDocs = remote.map((d) => {
-                return {
-                    id: `server-${d.name}`,
-                    key: d.name,
-                    name: d.display_name,
-                    type: inferType(d.display_name),
-                    updatedAt: new Date(d.updated_at).getTime(),
-                    sizeLabel: `${(d.size_bytes / 1024).toFixed(0)} KB`,
-                    isServer: true as const,
-                    indexStatus: d.index_status,
-                };
-            });
+            serverDocs = remote.map((d) => ({
+                id: `server-${d.name}`,
+                key: d.name,
+                name: d.display_name,
+                type: inferType(d.display_name),
+                updatedAt: new Date(d.updated_at).getTime(),
+                sizeLabel: `${(d.size_bytes / 1024).toFixed(0)} KB`,
+                isServer: true as const,
+                indexStatus: null,
+            }));
         } catch {
             serverDocs = [];
         }
-        // 本機紀錄與伺服器文件去重：若本機紀錄中已有同名的伺服器文件，不重複顯示（狀態以伺服器為準）。
         const serverNames = new Set(serverDocs.map((d) => d.name));
         const localOnly = items.filter((it) => !serverNames.has(it.name));
         setDocs([...localOnly, ...serverDocs]);
+        void loadStatuses();
     };
 
     // 初次載入與視窗回焦時刷新，避免跨頁操作後資料過期。
@@ -116,7 +128,7 @@ const EduRagDocsPage = () => {
                 clearInterval(timer);
                 return;
             }
-            void refreshDocs();
+            void loadStatuses();
         }, 8000);
         return () => clearInterval(timer);
     }, [anyServerIndexing]);
@@ -291,12 +303,12 @@ const EduRagDocsPage = () => {
         return type || 'file';
     };
 
-    // 逐列索引狀態：伺服器文件用其 index_status；本地剛上傳紀錄視為索引中。
-    const rowStatus = (doc: UploadRecord | ServerDoc): IndexStatus =>
+    // 逐列索引狀態：伺服器文件用其 indexStatus（null 代表狀態尚在載入）；本地剛上傳紀錄視為索引中。
+    const rowStatus = (doc: UploadRecord | ServerDoc): IndexStatus | null =>
         (doc as ServerDoc).isServer ? (doc as ServerDoc).indexStatus : 'indexing';
 
     // 狀態文字＋顏色（純文字，無 icon）。
-    const statusBadge = (s: IndexStatus): { label: string; className: string } => {
+    const statusBadge = (s: IndexStatus | null): { label: string; className: string } => {
         switch (s) {
             case 'ready':
                 return { label: '可查詢', className: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' };
@@ -304,8 +316,10 @@ const EduRagDocsPage = () => {
                 return { label: '無可讀內容', className: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400' };
             case 'failed':
                 return { label: '索引失敗', className: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' };
-            default:
+            case 'indexing':
                 return { label: '索引中', className: 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400' };
+            default:
+                return { label: '檢查中…', className: 'bg-slate-100 dark:bg-neutral-800 text-slate-500 dark:text-neutral-400' };
         }
     };
 

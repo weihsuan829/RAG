@@ -158,7 +158,10 @@ export async function uploadToR2(
 export type IndexStatus = 'indexing' | 'ready' | 'empty' | 'failed';
 
 export const listDocuments = () =>
-    request<{ name: string; size_bytes: number; updated_at: string; display_name: string; index_status: IndexStatus }[]>('/api/v1/documents');
+    request<{ name: string; size_bytes: number; updated_at: string; display_name: string }[]>('/api/v1/documents');
+
+export const fetchDocumentStatus = () =>
+    request<Record<string, IndexStatus>>('/api/v1/documents/status');
 
 export const triggerSync = () =>
     request<{ job_id: string }>('/api/v1/documents/sync', { method: 'POST' });
